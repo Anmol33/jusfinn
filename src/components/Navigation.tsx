@@ -15,16 +15,14 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">F</span>
-            </div>
+          <Link to="/" className="flex items-center space-x-1">
+            <img src="/logo.svg" alt="JusFinn Logo" style={{ height: 48 }} />
             <div className="hidden sm:block">
-              <h1 className="text-headline-small font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                FinScribe
+              <h1 className="text-headline-medium font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                JusFinn AI
               </h1>
               <p className="text-caption text-neutral-500 -mt-1">
-                CA Practice Management
+                Audit Ready. Always.
               </p>
             </div>
           </Link>

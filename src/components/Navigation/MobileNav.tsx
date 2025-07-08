@@ -90,11 +90,9 @@ const MobileNav = () => {
         <SheetHeader className="p-4 border-b">
           <div className="flex items-center justify-between">
             <SheetTitle className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">F</span>
-              </div>
+              <img src="/logo.svg" alt="JusFinn Logo" style={{ height: 28 }} />
               <div>
-                <h1 className="text-sm font-bold">FinScribe AI</h1>
+                <h1 className="text-sm font-bold">JusFinn AI</h1>
                 <p className="text-xs text-muted-foreground">Practice OS</p>
               </div>
             </SheetTitle>

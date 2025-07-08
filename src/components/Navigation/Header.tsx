@@ -45,7 +45,7 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 text-center">
         <div className="flex items-center justify-center space-x-2">
           <span className="text-sm font-medium">
-            🚀 Demo Mode: This is a fully functional UI demonstration of FinScribe AI Practice OS
+            🚀 Demo Mode: This is a fully functional UI demonstration of JusFinn AI Practice OS
           </span>
           <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/30">
             Interactive Demo
@@ -62,11 +62,9 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
           {/* Desktop Logo (hidden when sidebar is shown) */}
           {!showSidebar && (
             <Link to="/practice-os" className="hidden md:flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">F</span>
-              </div>
+              <img src="/logo.svg" alt="JusFinn Logo" style={{ height: 28 }} />
               <div>
-                <h1 className="text-sm font-bold">FinScribe AI</h1>
+                <h1 className="text-sm font-bold">JusFinn AI</h1>
                 <p className="text-xs text-muted-foreground hidden lg:block">Practice OS</p>
               </div>
             </Link>
@@ -145,7 +143,7 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
             <DropdownMenuContent align="end" className="w-56">
               <div className="p-2">
                 <div className="font-medium">CA Rajesh Mehta</div>
-                <div className="text-sm text-muted-foreground">rajesh@finscribe.com</div>
+                <div className="text-sm text-muted-foreground">rajesh@JusFinn.com</div>
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem>

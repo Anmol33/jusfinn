@@ -126,8 +126,8 @@ const PracticeOS = () => {
       <div className="border-b bg-white/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">FinScribe AI Practice OS</h1>
-            <p className="text-xl text-gray-600">Your intelligent operating system for CA practice management</p>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">JusFinn AI Practice OS</h1>
+            <p className="text-xl text-gray-600">Your intelligent operating system for Audit Ready. Always.</p>
           </div>
         </div>
       </div>

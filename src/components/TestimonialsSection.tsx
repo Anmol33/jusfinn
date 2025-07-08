@@ -10,7 +10,7 @@ const TestimonialsSection = () => {
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Trusted by Leading CA Firms
           </h2>
-          <p className="text-xl text-gray-600">See what our clients say about FinScribe AI</p>
+          <p className="text-xl text-gray-600">See what our clients say about JusFinn AI</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
@@ -23,7 +23,7 @@ const TestimonialsSection = () => {
               </div>
               <Quote className="w-8 h-8 text-gray-300 mb-4" />
               <p className="text-gray-600 mb-6 italic">
-                "FinScribe AI reduced our data processing time by 80%. The audit command centre is a game-changer for managing multiple client audits simultaneously."
+                "JusFinn AI reduced our data processing time by 80%. The audit command centre is a game-changer for managing multiple client audits simultaneously."
               </p>
               <div className="flex items-center">
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold mr-4">

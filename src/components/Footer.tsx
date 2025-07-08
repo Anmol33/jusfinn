@@ -11,7 +11,7 @@ const Footer = () => {
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
                 <Bot className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">FinScribe AI</span>
+              <span className="text-xl font-bold">JusFinn AI</span>
             </div>
             <p className="text-gray-400 text-sm">
               The intelligent practice platform for modern Chartered Accountants in India.
@@ -46,7 +46,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-          © 2025 FinScribe AI. All rights reserved. Built for Chartered Accountants in India.
+          © 2025 JusFinn AI. All rights reserved. Built for Chartered Accountants in India.
         </div>
       </div>
     </footer>

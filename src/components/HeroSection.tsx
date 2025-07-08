@@ -32,7 +32,7 @@ const HeroSection = () => {
         {/* Subheading */}
         <p className="text-body-large text-neutral-600 mb-12 max-w-4xl mx-auto leading-relaxed animate-slide-in-up" style={{ animationDelay: '200ms' }}>
           Transform your CA practice with AI-powered automation. From chaotic data ingestion to streamlined audit workflows, 
-          FinScribe AI eliminates operational drag and elevates your client service to new heights.
+          JusFinn AI eliminates operational drag and elevates your client service to new heights.
         </p>
 
         {/* CTA Buttons */}

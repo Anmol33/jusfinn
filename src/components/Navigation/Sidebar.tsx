@@ -128,7 +128,6 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         : [...prev, sectionTitle]
     );
   };
-
   return (
     <div className={cn(
       "flex h-screen flex-col bg-white/80 backdrop-blur-xl border-r border-neutral-200/80 transition-all duration-300 ease-in-out",
@@ -138,15 +137,13 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       <div className="p-4 border-b border-neutral-200/50">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">F</span>
-              </div>
+            <div className="flex items-center space-x-1">
+              <img src="/logo.svg" alt="JusFinn Logo" style={{ height: 48 }} />
               <div>
-                <h2 className="text-headline-small font-semibold text-neutral-800">
-                  FinScribe
+                <h2 className="text-headline-small font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  JusFinn AI
                 </h2>
-                <p className="text-caption text-neutral-500">CA Practice OS</p>
+                <p className="text-[10px] text-neutral-500">Audit Ready. Always.</p>
               </div>
             </div>
           )}
@@ -249,7 +246,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         <div className="p-4 border-t border-neutral-200/50">
           <div className="flex items-center justify-between text-sm text-neutral-500">
             <span>11 items</span>
-            <span>FinScribe OS</span>
+            <span>JusFinn OS</span>
           </div>
         </div>
       )}
