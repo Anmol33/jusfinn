@@ -14,23 +14,25 @@ const SignIn = () => {
       try {
         // Get the ID token from Google
         const idToken = (tokenResponse as any).credential || tokenResponse.access_token;
-        
+
+        console.log(idToken);
+
         if (!idToken) {
           throw new Error('No ID token received from Google');
         }
 
         // Send ID token to backend for verification
-        const response = await axios.post('http://localhost:8000/auth/google/verify', {
-          id_token: idToken
-        });
+        // const response = await axios.post('http://localhost:8000/auth/google/verify', {
+        //   id_token: idToken
+        // });
 
-        const { access_token, user } = response.data;
+        // const { access_token, user } = response.data;
 
-        // Store the backend JWT token and user info
-        localStorage.setItem('auth', JSON.stringify({
-          access_token,
-          user
-        }));
+        // // Store the backend JWT token and user info
+        // localStorage.setItem('auth', JSON.stringify({
+        //   access_token,
+        //   user
+        // }));
 
         setLoading(false);
         navigate('/dashboard');
