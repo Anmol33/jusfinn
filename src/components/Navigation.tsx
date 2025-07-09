@@ -1,10 +1,32 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, ArrowRight, Play } from "lucide-react";
+import { GoogleLogin, useGoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const login = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      const { access_token } = tokenResponse;
+      // Fetch user info
+      const userInfo = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${access_token}` }
+      });
+      // Save to localStorage (simulate JSON file)
+      localStorage.setItem('auth', JSON.stringify({
+        access_token,
+        user: userInfo.data
+      }));
+      window.location.href = '/dashboard';
+    },
+    onError: () => alert('Google Login Failed'),
+    scope: 'openid email profile https://www.googleapis.com/auth/user.phonenumbers.read',
+    flow: 'implicit',
+  });
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -52,12 +74,10 @@ const Navigation = () => {
               <Play className="w-4 h-4 mr-2" />
               Demo
             </Button>
-            <Link to="/dashboard">
-              <Button className="btn-primary group">
-                <span>Get Started</span>
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
+            <Button className="btn-primary group" onClick={() => navigate('/login')}>
+              <span>Get Started</span>
+              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
           </div>
 
           {/* Mobile menu button */}
@@ -122,12 +142,10 @@ const Navigation = () => {
                     <Play className="w-4 h-4 mr-2" />
                     Demo
                   </Button>
-                  <Link to="/dashboard">
-                    <Button className="btn-primary w-full group">
-                      <span>Get Started</span>
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
+                  <Button className="btn-primary w-full group" onClick={() => navigate('/login')}>
+                    <span>Get Started</span>
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
                 </div>
               </div>
             </div>

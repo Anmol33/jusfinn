@@ -40,7 +40,7 @@ import {
   Trash2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // Apple Design: State management for realistic demo
@@ -58,7 +58,17 @@ interface Task {
 const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [userInfo, setUserInfo] = useState<any>(null);
   
+  // Get user info from localStorage
+  useEffect(() => {
+    const authData = localStorage.getItem('auth');
+    if (authData) {
+      const { user } = JSON.parse(authData);
+      setUserInfo(user);
+    }
+  }, []);
+
   // Apple Design: Realistic state management
   const [tasks, setTasks] = useState<Task[]>([
     { 
@@ -505,6 +515,25 @@ const Dashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* User Info Section */}
+        {userInfo && (
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-3">
+              {userInfo.picture && (
+                <img 
+                  src={userInfo.picture} 
+                  alt={userInfo.name} 
+                  className="w-10 h-10 rounded-full"
+                />
+              )}
+              <div>
+                <h3 className="font-semibold text-gray-900">Welcome back, {userInfo.name}!</h3>
+                <p className="text-sm text-gray-600">{userInfo.email}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Apple Design: Key metrics with real data */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {keyMetrics.map((metric, index) => (
