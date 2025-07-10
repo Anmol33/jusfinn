@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { setAuth } from '@/lib/auth';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -31,10 +32,10 @@ const AuthCallback = () => {
         const userData = JSON.parse(decodeURIComponent(dataParam));
         
         // Store the authentication data
-        localStorage.setItem('auth', JSON.stringify({
+        setAuth({
           access_token: userData.access_token,
           user: userData.user
-        }));
+        });
 
         setLoading(false);
         

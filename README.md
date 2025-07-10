@@ -1,6 +1,8 @@
-# JusFinn
+# JusFinn Frontend
 
 ## Project info
+
+A modern React frontend for JusFinn AI Practice OS with Google OAuth integration.
 
 ## How can I edit this code?
 
@@ -13,13 +15,30 @@ Follow these steps:
 git clone <YOUR_GIT_URL>
 
 # Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+cd jusfinn
 
 # Step 3: Install the necessary dependencies.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Step 4: Set up environment variables
+node setup_env.js
+
+# Step 5: Start the development server with auto-reloading and an instant preview.
 npm run dev
+```
+
+## Environment Configuration
+
+### Development
+```env
+VITE_API_BASE_URL=http://localhost:8000
+VITE_NODE_ENV=development
+```
+
+### Production
+```env
+VITE_API_BASE_URL=https://api.jusfinn.com
+VITE_NODE_ENV=production
 ```
 
 ## What technologies are used for this project?

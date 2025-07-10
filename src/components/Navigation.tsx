@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, ArrowRight, Play } from "lucide-react";
-import axios from 'axios';
+import api from '@/lib/api';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -11,7 +11,7 @@ const Navigation = () => {
   const handleGoogleLogin = async () => {
     try {
       // Get the authorization URL from backend
-      const response = await axios.get('http://localhost:8000/auth/google/login');
+      const response = await api.get('/auth/google/login');
       const { authorization_url } = response.data;
       
       // Redirect user to Google OAuth

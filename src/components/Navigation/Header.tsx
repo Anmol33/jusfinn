@@ -16,7 +16,7 @@ import MobileNav from "./MobileNav";
 import Breadcrumb from "./Breadcrumb";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import axios from 'axios';
+import api from '@/lib/api';
 
 interface HeaderProps {
   onSidebarToggle?: () => void;
@@ -45,7 +45,7 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
   const handleGoogleLogin = async () => {
     try {
       // Get the authorization URL from backend
-      const response = await axios.get('http://localhost:8000/auth/google/login');
+      const response = await api.get('/auth/google/login');
       const { authorization_url } = response.data;
       
       // Redirect user to Google OAuth

@@ -1,17 +1,51 @@
 import { Button } from "@/components/ui/button";
-import axios from 'axios';
+import api from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { checkExistingAuth, validateToken } from '@/lib/auth';
 
 const SignIn = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Check for existing authentication on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const existingAuth = checkExistingAuth();
+        
+        if (existingAuth) {
+          // Validate the token with the backend
+          const isValid = await validateToken(existingAuth.access_token);
+          
+          if (isValid) {
+            // Token is valid, redirect to dashboard
+            console.log('Valid token found, redirecting to dashboard');
+            navigate('/dashboard', { replace: true });
+            return;
+          } else {
+            // Token is invalid, clear it
+            console.log('Invalid token found, clearing auth data');
+            localStorage.removeItem('auth');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+        localStorage.removeItem('auth');
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
       // Get the authorization URL from backend
-      const response = await axios.get('http://localhost:8000/auth/google/login');
+      const response = await api.get('/auth/google/login');
       const { authorization_url } = response.data;
       console.log(authorization_url);
 
@@ -24,6 +58,21 @@ const SignIn = () => {
       alert('Failed to initiate Google login. Please try again.');
     }
   };
+
+  // Show loading state while checking authentication
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-gray-100">
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+            <h2 className="text-xl font-semibold text-gray-700">Checking authentication...</h2>
+            <p className="text-gray-500 mt-2">Please wait while we verify your login status.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
