@@ -13,7 +13,7 @@ const AppLayout = ({ children }: AppLayoutProps) => {
   const location = useLocation();
 
   // Routes where we don't want to show the sidebar
-  const noSidebarRoutes = ["/", "/practice-os", "/login"];
+  const noSidebarRoutes = ["/", "/practice-os", "/signin", "/auth/callback"];
   const showSidebar = !noSidebarRoutes.includes(location.pathname);
 
   const handleSidebarToggle = () => {

@@ -16,7 +16,6 @@ import MobileNav from "./MobileNav";
 import Breadcrumb from "./Breadcrumb";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 
 interface HeaderProps {
@@ -43,22 +42,19 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
     console.log("Search query:", searchQuery);
   };
 
-  const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      const { access_token } = tokenResponse;
-      const userInfo = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${access_token}` }
-      });
-      localStorage.setItem('auth', JSON.stringify({
-        access_token,
-        user: userInfo.data
-      }));
-      window.location.href = '/dashboard';
-    },
-    onError: () => alert('Google Login Failed'),
-    scope: 'openid email profile https://www.googleapis.com/auth/user.phonenumbers.read',
-    flow: 'implicit',
-  });
+  const handleGoogleLogin = async () => {
+    try {
+      // Get the authorization URL from backend
+      const response = await axios.get('http://localhost:8000/auth/google/login');
+      const { authorization_url } = response.data;
+      
+      // Redirect user to Google OAuth
+      window.location.href = authorization_url;
+    } catch (error) {
+      console.error('Failed to initiate Google login:', error);
+      alert('Failed to initiate Google login. Please try again.');
+    }
+  };
 
   const isAuthenticated = !!localStorage.getItem('auth');
 
@@ -129,7 +125,7 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
                       <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.04c-5.5 0-9.96 4.46-9.96 9.96 0 4.99 3.66 9.12 8.44 9.88v-6.99h-2.54v-2.89h2.54v-2.2c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.44 2.89h-2.34v6.99c4.78-.76 8.44-4.89 8.44-9.88 0-5.5-4.46-9.96-9.96-9.96z"/></svg>
                       Github
                     </Button>
-                    <Button variant="outline" className="flex-1 flex items-center justify-center gap-2" onClick={() => { setOpen(false); login(); }}>
+                    <Button variant="outline" className="flex-1 flex items-center justify-center gap-2" onClick={() => { setOpen(false); handleGoogleLogin(); }}>
                       <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21.35 11.1h-9.18v2.92h5.27c-.23 1.25-1.41 3.67-5.27 3.67-3.17 0-5.76-2.62-5.76-5.84s2.59-5.84 5.76-5.84c1.81 0 3.03.77 3.73 1.43l2.55-2.47c-1.62-1.5-3.7-2.43-6.28-2.43-5.01 0-9.08 4.07-9.08 9.08s4.07 9.08 9.08 9.08c5.25 0 8.73-3.68 8.73-8.86 0-.59-.07-1.04-.16-1.49z"/></svg>
                       Google
                     </Button>
@@ -200,6 +196,10 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
                       </div>
                     </DropdownMenuItem>
                   ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-center text-sm text-muted-foreground">
+                    View all notifications
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -207,37 +207,34 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
                       <User className="h-4 w-4 text-white" />
                     </div>
-                    <div className="hidden md:block text-left">
-                      <div className="text-sm font-medium">CA Rajesh Mehta</div>
-                      <div className="text-xs text-muted-foreground">Practice Owner</div>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    <span className="hidden md:block text-sm font-medium">John Doe</span>
+                    <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="p-2">
-                    <div className="font-medium">CA Rajesh Mehta</div>
-                    <div className="text-sm text-muted-foreground">rajesh@JusFinn.com</div>
+                    <div className="text-sm font-medium">John Doe</div>
+                    <div className="text-xs text-muted-foreground">john.doe@example.com</div>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
-                    <User className="h-4 w-4 mr-2" />
-                    Profile
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <HelpCircle className="h-4 w-4 mr-2" />
-                    Help & Support
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    <span>Help & Support</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-red-600">
-                    Logout
+                    Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

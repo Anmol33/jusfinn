@@ -2,31 +2,25 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, ArrowRight, Play } from "lucide-react";
-import { GoogleLogin, useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      const { access_token } = tokenResponse;
-      // Fetch user info
-      const userInfo = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${access_token}` }
-      });
-      // Save to localStorage (simulate JSON file)
-      localStorage.setItem('auth', JSON.stringify({
-        access_token,
-        user: userInfo.data
-      }));
-      window.location.href = '/dashboard';
-    },
-    onError: () => alert('Google Login Failed'),
-    scope: 'openid email profile https://www.googleapis.com/auth/user.phonenumbers.read',
-    flow: 'implicit',
-  });
+  const handleGoogleLogin = async () => {
+    try {
+      // Get the authorization URL from backend
+      const response = await axios.get('http://localhost:8000/auth/google/login');
+      const { authorization_url } = response.data;
+      
+      // Redirect user to Google OAuth
+      window.location.href = authorization_url;
+    } catch (error) {
+      console.error('Failed to initiate Google login:', error);
+      alert('Failed to initiate Google login. Please try again.');
+    }
+  };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -74,7 +68,7 @@ const Navigation = () => {
               <Play className="w-4 h-4 mr-2" />
               Demo
             </Button>
-            <Button className="btn-primary group" onClick={() => navigate('/login')}>
+            <Button className="btn-primary group" onClick={() => navigate('/signin')}>
               <span>Get Started</span>
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
@@ -142,7 +136,7 @@ const Navigation = () => {
                     <Play className="w-4 h-4 mr-2" />
                     Demo
                   </Button>
-                  <Button className="btn-primary w-full group" onClick={() => navigate('/login')}>
+                  <Button className="btn-primary w-full group" onClick={() => navigate('/signin')}>
                     <span>Get Started</span>
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
