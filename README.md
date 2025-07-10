@@ -51,6 +51,14 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Features
+
+- **Authentication**: Google OAuth2 integration with automatic login
+- **Logout Functionality**: Secure logout with confirmation dialog
+- **User Profile**: Display user information from Google account
+- **Protected Routes**: Automatic authentication checks
+- **Responsive Design**: Works on desktop and mobile devices
+
 ## How can I deploy this project?
 
 You can deploy this project using your preferred deployment platform.

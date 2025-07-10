@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +15,9 @@ import { cn } from "@/lib/utils";
 import MobileNav from "./MobileNav";
 import Breadcrumb from "./Breadcrumb";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import api from '@/lib/api';
+import { checkExistingAuth } from '@/lib/auth';
+import LogoutDialog from '@/components/LogoutDialog';
 
 interface HeaderProps {
   onSidebarToggle?: () => void;
@@ -25,8 +26,9 @@ interface HeaderProps {
 
 const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [open, setOpen] = useState(false);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const notifications = [
     { id: 1, message: "GST Return due for ABC Corp", urgent: true },
@@ -42,21 +44,8 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
     console.log("Search query:", searchQuery);
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      // Get the authorization URL from backend
-      const response = await api.get('/auth/google/login');
-      const { authorization_url } = response.data;
-      
-      // Redirect user to Google OAuth
-      window.location.href = authorization_url;
-    } catch (error) {
-      console.error('Failed to initiate Google login:', error);
-      alert('Failed to initiate Google login. Please try again.');
-    }
-  };
-
-  const isAuthenticated = !!localStorage.getItem('auth');
+  const authData = checkExistingAuth();
+  const isAuthenticated = !!authData;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -112,53 +101,13 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
         <div className="flex items-center space-x-2">
           {/* Show Sign in if not authenticated */}
           {!isAuthenticated && (
-            <>
-              <Button variant="default" onClick={() => setOpen(true)}>
-                Sign in
-              </Button>
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="max-w-md w-full p-8 rounded-2xl">
-                  <h2 className="text-2xl font-bold text-center mb-2">Sign in</h2>
-                  <p className="text-center text-gray-500 mb-6">Welcome back to your JusFinn workspace.</p>
-                  <div className="flex gap-3 mb-6">
-                    <Button variant="outline" className="flex-1 flex items-center justify-center gap-2">
-                      <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.04c-5.5 0-9.96 4.46-9.96 9.96 0 4.99 3.66 9.12 8.44 9.88v-6.99h-2.54v-2.89h2.54v-2.2c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.44 2.89h-2.34v6.99c4.78-.76 8.44-4.89 8.44-9.88 0-5.5-4.46-9.96-9.96-9.96z"/></svg>
-                      Github
-                    </Button>
-                    <Button variant="outline" className="flex-1 flex items-center justify-center gap-2" onClick={() => { setOpen(false); handleGoogleLogin(); }}>
-                      <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M21.35 11.1h-9.18v2.92h5.27c-.23 1.25-1.41 3.67-5.27 3.67-3.17 0-5.76-2.62-5.76-5.84s2.59-5.84 5.76-5.84c1.81 0 3.03.77 3.73 1.43l2.55-2.47c-1.62-1.5-3.7-2.43-6.28-2.43-5.01 0-9.08 4.07-9.08 9.08s4.07 9.08 9.08 9.08c5.25 0 8.73-3.68 8.73-8.86 0-.59-.07-1.04-.16-1.49z"/></svg>
-                      Google
-                    </Button>
-                    <Button variant="outline" className="flex-1 flex items-center justify-center gap-2">
-                      <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
-                      SSO
-                    </Button>
-                  </div>
-                  <div className="flex items-center mb-6">
-                    <div className="flex-1 h-px bg-gray-200" />
-                    <span className="mx-4 text-gray-400">OR</span>
-                    <div className="flex-1 h-px bg-gray-200" />
-                  </div>
-                  <form className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Email address</label>
-                      <input type="email" className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Enter your email" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Password</label>
-                      <input type="password" className="mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Enter your password" />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <a href="#" className="text-sm text-blue-600 hover:underline">Forgot password? Reset</a>
-                    </div>
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">Sign in</Button>
-                  </form>
-                  <p className="mt-6 text-center text-sm text-gray-500">
-                    Don't have an account? <a href="#" className="text-blue-600 hover:underline">Sign up</a>
-                  </p>
-                </DialogContent>
-              </Dialog>
-            </>
+            <Button 
+              variant="default" 
+              onClick={() => navigate('/signin')}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Get Started
+            </Button>
           )}
 
           {/* Notifications and User Menu (if authenticated) */}
@@ -207,17 +156,27 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="flex items-center space-x-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                      <User className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="hidden md:block text-sm font-medium">John Doe</span>
+                    {authData?.user.picture ? (
+                      <img 
+                        src={authData.user.picture} 
+                        alt={authData.user.name}
+                        className="w-8 h-8 rounded-full"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                        <User className="h-4 w-4 text-white" />
+                      </div>
+                    )}
+                    <span className="hidden md:block text-sm font-medium">
+                      {authData?.user.name || 'User'}
+                    </span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="p-2">
-                    <div className="text-sm font-medium">John Doe</div>
-                    <div className="text-xs text-muted-foreground">john.doe@example.com</div>
+                    <div className="text-sm font-medium">{authData?.user.name || 'User'}</div>
+                    <div className="text-xs text-muted-foreground">{authData?.user.email || 'user@example.com'}</div>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
@@ -233,7 +192,13 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
                     <span>Help & Support</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">
+                  <DropdownMenuItem 
+                    className="text-red-600 cursor-pointer"
+                    onClick={() => setLogoutDialogOpen(true)}
+                  >
+                    <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -242,6 +207,12 @@ const Header = ({ onSidebarToggle, showSidebar = true }: HeaderProps) => {
           )}
         </div>
       </div>
+      
+      {/* Logout Dialog */}
+      <LogoutDialog 
+        open={logoutDialogOpen} 
+        onOpenChange={setLogoutDialogOpen} 
+      />
     </header>
   );
 };

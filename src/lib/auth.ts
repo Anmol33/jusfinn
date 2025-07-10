@@ -57,4 +57,15 @@ export const clearAuth = (): void => {
 
 export const setAuth = (authData: AuthData): void => {
   localStorage.setItem('auth', JSON.stringify(authData));
+};
+
+export const logout = (): void => {
+  // Clear authentication data
+  localStorage.removeItem('auth');
+  
+  // Clear any other auth-related data
+  sessionStorage.clear();
+  
+  // Redirect to home page
+  window.location.href = '/';
 }; 

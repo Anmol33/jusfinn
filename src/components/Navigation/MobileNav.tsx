@@ -25,6 +25,7 @@ import {
   X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logout } from '@/lib/auth';
 
 interface NavigationItem {
   title: string;
@@ -164,7 +165,10 @@ const MobileNav = () => {
               variant="ghost" 
               className="w-full justify-start text-red-600 hover:text-red-600 hover:bg-red-50" 
               size="sm"
-              onClick={handleNavigation}
+              onClick={() => {
+                handleNavigation();
+                logout();
+              }}
             >
               <LogOut className="h-4 w-4 mr-3" />
               Logout
