@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Helmet } from 'react-helmet-async';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -94,6 +95,16 @@ const ClientManagement = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <Helmet>
+        <title>Client Management - JusFinn AI</title>
+        <meta name="description" content="Manage your CA clients efficiently with JusFinn AI. Track client status, compliance, and relationships in one centralized platform." />
+        <meta name="keywords" content="client management, CA clients, practice management, client tracking, compliance management, JusFinn AI" />
+        <meta property="og:title" content="Client Management - JusFinn AI" />
+        <meta property="og:description" content="Manage your CA clients efficiently with JusFinn AI. Track client status, compliance, and relationships in one centralized platform." />
+        <meta property="og:url" content="https://your-domain.com/client-management" />
+        <link rel="canonical" href="https://your-domain.com/client-management" />
+      </Helmet>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
