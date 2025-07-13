@@ -6,12 +6,6 @@ const getApiBaseUrl = (): string => {
   console.log('- PROD:', import.meta.env.PROD);
   console.log('- DEV:', import.meta.env.DEV);
   
-  // TEMPORARY OVERRIDE: Force HTTPS in production
-  if (import.meta.env.PROD || import.meta.env.MODE === 'production') {
-    console.log('🔒 FORCING HTTPS for production');
-    return 'https://backend.jusfinn.com';
-  }
-  
   // Check if we have an environment variable set
   if (import.meta.env.VITE_API_BASE_URL) {
     console.log('✅ Using VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);

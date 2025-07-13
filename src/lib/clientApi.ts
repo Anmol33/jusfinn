@@ -9,7 +9,7 @@ export const clientApi = {
     status?: string;
     search?: string;
   }): Promise<Client[]> {
-    const response = await api.get('/clients', { params });
+    const response = await api.get('/clients/', { params });
     return response.data;
   },
 
@@ -21,7 +21,7 @@ export const clientApi = {
 
   // Create a new client
   async createClient(clientData: ClientCreateRequest): Promise<Client> {
-    const response = await api.post('/clients', clientData);
+    const response = await api.post('/clients/', clientData);
     return response.data;
   },
 
@@ -38,13 +38,13 @@ export const clientApi = {
 
   // Get client count
   async getClientCount(): Promise<{ count: number }> {
-    const response = await api.get('/clients/stats/count');
+    const response = await api.get('/clients/stats/count/');
     return response.data;
   },
 
   // Get client statistics
   async getClientStats(): Promise<ClientStats> {
-    const response = await api.get('/clients/stats/by-status');
+    const response = await api.get('/clients/stats/by-status/');
     return response.data;
   },
 
@@ -56,7 +56,7 @@ export const clientApi = {
     pending: number;
     this_month: number;
   }> {
-    const response = await api.get('/clients/stats/dashboard');
+    const response = await api.get('/clients/stats/dashboard/');
     return response.data;
   },
 
@@ -65,7 +65,7 @@ export const clientApi = {
     skip?: number;
     limit?: number;
   }): Promise<Client[]> {
-    const response = await api.get('/clients', { 
+    const response = await api.get('/clients/', { 
       params: { ...params, search: query } 
     });
     return response.data;
@@ -76,7 +76,7 @@ export const clientApi = {
     skip?: number;
     limit?: number;
   }): Promise<Client[]> {
-    const response = await api.get('/clients', { 
+    const response = await api.get('/clients/', { 
       params: { ...params, status } 
     });
     return response.data;
