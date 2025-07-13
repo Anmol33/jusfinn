@@ -107,22 +107,22 @@ const ClientManagement = () => {
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+            <div>
           <h1 className="text-3xl font-bold text-gray-900">Client Management</h1>
           <p className="text-gray-600 mt-2">
             Manage your clients, track compliance, and monitor relationships
           </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
+            </div>
+            <div className="flex items-center gap-3">
+              <Button 
             onClick={handleCreateClient}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Client
-          </Button>
-        </div>
-      </div>
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Client
+              </Button>
+            </div>
+          </div>
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -138,7 +138,7 @@ const ClientManagement = () => {
               ) : (
                 stats.total
               )}
-            </div>
+        </div>
             <p className="text-xs text-muted-foreground">
               {statsLoading ? "Loading..." : "Total registered clients"}
             </p>
@@ -157,13 +157,13 @@ const ClientManagement = () => {
               ) : (
                 stats.active
               )}
-            </div>
+                </div>
             <p className="text-xs text-muted-foreground">
               {statsLoading ? "Loading..." : "Currently active clients"}
             </p>
-          </CardContent>
-        </Card>
-
+            </CardContent>
+          </Card>
+          
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Clients</CardTitle>
@@ -176,13 +176,13 @@ const ClientManagement = () => {
               ) : (
                 stats.pending
               )}
-            </div>
+                </div>
             <p className="text-xs text-muted-foreground">
               {statsLoading ? "Loading..." : "Awaiting activation"}
             </p>
-          </CardContent>
-        </Card>
-
+            </CardContent>
+          </Card>
+          
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">This Month</CardTitle>
@@ -201,7 +201,7 @@ const ClientManagement = () => {
             </p>
           </CardContent>
         </Card>
-      </div>
+                </div>
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -240,10 +240,10 @@ const ClientManagement = () => {
                 <div className="text-center py-8">
                   <Activity className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                   <p className="text-gray-500">Analytics dashboard coming soon</p>
-                </div>
-              </CardContent>
-            </Card>
-
+              </div>
+            </CardContent>
+          </Card>
+          
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
