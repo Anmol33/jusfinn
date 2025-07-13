@@ -61,6 +61,10 @@ const ClientList: React.FC<ClientListProps> = ({
 
   const loadClients = async () => {
     try {
+      console.log('🔍 ClientList - Loading clients...');
+      console.log('🔗 ClientList - API Base URL:', import.meta.env.VITE_API_BASE_URL);
+      console.log('🏁 ClientList - Environment mode:', import.meta.env.MODE);
+      
       // Only show full loading for initial load (first time only)
       if (!hasInitiallyLoaded) {
         setLoading(true);
@@ -71,10 +75,13 @@ const ClientList: React.FC<ClientListProps> = ({
       let clientsData: Client[] = [];
 
       if (searchQuery) {
+        console.log('🔍 Making search request for:', searchQuery);
         clientsData = await clientApi.searchClients(searchQuery);
       } else if (statusFilter !== 'all') {
+        console.log('🔍 Making status filter request for:', statusFilter);
         clientsData = await clientApi.getClientsByStatus(statusFilter);
       } else {
+        console.log('🔍 Making getClients request (no filters)');
         clientsData = await clientApi.getClients();
       }
 
@@ -83,9 +90,16 @@ const ClientList: React.FC<ClientListProps> = ({
         clientsData = clientsData.filter(client => client.client_type === typeFilter);
       }
 
+      console.log('✅ ClientList - Successfully loaded clients:', clientsData.length);
       setClients(clientsData);
       setHasInitiallyLoaded(true);
     } catch (error) {
+      console.error('❌ ClientList - Error loading clients:', error);
+      console.error('❌ ClientList - Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        config: error.config
+      });
       toast({
         title: "❌ Error",
         description: "Failed to load clients. Please try again.",
