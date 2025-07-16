@@ -27,7 +27,26 @@ import {
   FileCheck,
   Bell,
   Target,
-  Zap
+  Zap,
+  ShoppingCart,
+  Truck,
+  FileText as FileInvoice,
+  HandCoins,
+  Clock,
+  Package,
+  DollarSign,
+  UserCheck,
+  Banknote,
+  Send,
+  FileSpreadsheet,
+  ShoppingBag,
+  Clipboard,
+  QrCode,
+  RotateCcw,
+  Wallet,
+  Timer,
+  TrendingDown,
+  ArrowUpRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
@@ -41,7 +60,7 @@ interface SidebarProps {
 export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const location = useLocation();
   const [expandedSections, setExpandedSections] = useState<string[]>([
-    "Tax", "Accounting"
+    "Tax", "Accounting", "Purchases & Expenses", "Invoicing & Sales"
   ]);
 
   // Apple Design: Logical CA workflow with clear naming
@@ -85,6 +104,35 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       items: [
         { title: "Reconciliation", href: "/reconciliation", icon: CreditCard },
         { title: "Workflows", href: "/workflow-manager", icon: Workflow },
+      ]
+    },
+    {
+      title: "Purchases & Expenses",
+      items: [
+        { title: "Vendor Master", href: "/vendor-master", icon: UserCheck },
+        { title: "Purchase Orders", href: "/purchase-orders", icon: ShoppingCart },
+        { title: "Goods Receipt", href: "/goods-receipt-note", icon: Package },
+        { title: "Purchase Bills", href: "/purchase-bills", icon: FileInvoice },
+        { title: "Expense Management", href: "/expense-management", icon: DollarSign },
+        { title: "TDS Compliance", href: "/tds-compliance", icon: HandCoins },
+        { title: "ITC Management", href: "/itc-management", icon: Receipt },
+        { title: "Payables Aging", href: "/payables-aging", icon: Clock },
+        { title: "Landed Cost", href: "/landed-cost-accounting", icon: Truck },
+      ]
+    },
+    {
+      title: "Invoicing & Sales",
+      items: [
+        { title: "Customer Master", href: "/customer-master", icon: Users },
+        { title: "Item/Service Master", href: "/item-service-master", icon: FileSpreadsheet },
+        { title: "Sales Quotation", href: "/sales-quotation", icon: Send },
+        { title: "Sales Order", href: "/sales-order", icon: ShoppingBag },
+        { title: "Delivery Challan", href: "/delivery-challan", icon: Clipboard },
+        { title: "Tax Invoice", href: "/tax-invoice", icon: QrCode },
+        { title: "Credit Notes", href: "/credit-notes", icon: RotateCcw },
+        { title: "Payment Collection", href: "/payment-collection", icon: Wallet },
+        { title: "Receivables Aging", href: "/receivables-aging", icon: Timer },
+        { title: "Sales Reports", href: "/sales-reports", icon: TrendingDown },
       ]
     },
     {
@@ -245,7 +293,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       {!isCollapsed && (
         <div className="p-4 border-t border-neutral-200/50">
           <div className="flex items-center justify-between text-sm text-neutral-500">
-            <span>11 items</span>
+            <span>23 items</span>
             <span>JusFinn OS</span>
           </div>
         </div>

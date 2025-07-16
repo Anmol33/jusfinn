@@ -30,6 +30,29 @@ import Reports from './pages/Reports';
 import SignIn from './pages/SignIn';
 import AuthCallback from './pages/AuthCallback';
 
+// Purchases & Expenses pages
+import VendorMaster from './pages/VendorMaster';
+import PurchaseOrders from './pages/PurchaseOrders';
+import GoodsReceiptNote from './pages/GoodsReceiptNote';
+import PurchaseBills from './pages/PurchaseBills';
+import ExpenseManagement from './pages/ExpenseManagement';
+import TDSCompliance from './pages/TDSCompliance';
+import ITCManagement from './pages/ITCManagement';
+import PayablesAging from './pages/PayablesAging';
+import LandedCostAccounting from './pages/LandedCostAccounting';
+
+// Invoicing & Sales pages
+import CustomerMaster from './pages/CustomerMaster';
+import ItemServiceMaster from './pages/ItemServiceMaster';
+import SalesQuotation from './pages/SalesQuotation';
+import SalesOrder from './pages/SalesOrder';
+import DeliveryChallan from './pages/DeliveryChallan';
+import TaxInvoice from './pages/TaxInvoice';
+import CreditNotes from './pages/CreditNotes';
+import PaymentCollection from './pages/PaymentCollection';
+import ReceivablesAging from './pages/ReceivablesAging';
+import SalesReports from './pages/SalesReports';
+
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -132,6 +155,106 @@ function App() {
                   <Reports />
                 </ProtectedRoute>
               } />
+              
+              {/* Purchases & Expenses Routes */}
+              <Route path="/vendor-master" element={
+                <ProtectedRoute>
+                  <VendorMaster />
+                </ProtectedRoute>
+              } />
+              <Route path="/purchase-orders" element={
+                <ProtectedRoute>
+                  <PurchaseOrders />
+                </ProtectedRoute>
+              } />
+              <Route path="/goods-receipt-note" element={
+                <ProtectedRoute>
+                  <GoodsReceiptNote />
+                </ProtectedRoute>
+              } />
+              <Route path="/purchase-bills" element={
+                <ProtectedRoute>
+                  <PurchaseBills />
+                </ProtectedRoute>
+              } />
+              <Route path="/expense-management" element={
+                <ProtectedRoute>
+                  <ExpenseManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/tds-compliance" element={
+                <ProtectedRoute>
+                  <TDSCompliance />
+                </ProtectedRoute>
+              } />
+              <Route path="/itc-management" element={
+                <ProtectedRoute>
+                  <ITCManagement />
+                </ProtectedRoute>
+              } />
+              <Route path="/payables-aging" element={
+                <ProtectedRoute>
+                  <PayablesAging />
+                </ProtectedRoute>
+              } />
+              <Route path="/landed-cost-accounting" element={
+                <ProtectedRoute>
+                  <LandedCostAccounting />
+                </ProtectedRoute>
+              } />
+              
+              {/* Invoicing & Sales Routes */}
+              <Route path="/customer-master" element={
+                <ProtectedRoute>
+                  <CustomerMaster />
+                </ProtectedRoute>
+              } />
+              <Route path="/item-service-master" element={
+                <ProtectedRoute>
+                  <ItemServiceMaster />
+                </ProtectedRoute>
+              } />
+              <Route path="/sales-quotation" element={
+                <ProtectedRoute>
+                  <SalesQuotation />
+                </ProtectedRoute>
+              } />
+              <Route path="/sales-order" element={
+                <ProtectedRoute>
+                  <SalesOrder />
+                </ProtectedRoute>
+              } />
+              <Route path="/delivery-challan" element={
+                <ProtectedRoute>
+                  <DeliveryChallan />
+                </ProtectedRoute>
+              } />
+              <Route path="/tax-invoice" element={
+                <ProtectedRoute>
+                  <TaxInvoice />
+                </ProtectedRoute>
+              } />
+              <Route path="/credit-notes" element={
+                <ProtectedRoute>
+                  <CreditNotes />
+                </ProtectedRoute>
+              } />
+              <Route path="/payment-collection" element={
+                <ProtectedRoute>
+                  <PaymentCollection />
+                </ProtectedRoute>
+              } />
+              <Route path="/receivables-aging" element={
+                <ProtectedRoute>
+                  <ReceivablesAging />
+                </ProtectedRoute>
+              } />
+              <Route path="/sales-reports" element={
+                <ProtectedRoute>
+                  <SalesReports />
+                </ProtectedRoute>
+              } />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AppLayout>
