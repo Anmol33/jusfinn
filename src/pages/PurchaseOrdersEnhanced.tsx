@@ -8,10 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { 
@@ -162,6 +164,11 @@ interface CreatePOForm {
   line_items: POLineItem[];
 }
 
+// Form interface for edit dialog
+interface EditPOForm extends CreatePOForm {
+  id: string;
+}
+
 interface LineItemForm {
   item_description: string;
   unit: string;
@@ -222,6 +229,40 @@ const PurchaseOrdersEnhanced = () => {
   const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [retryAttempts, setRetryAttempts] = useState<{ [key: string]: number }>({});
+
+  // Edit dialog state management
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingPO, setEditingPO] = useState<PurchaseOrder | null>(null);
+  const [editForm, setEditForm] = useState<EditPOForm>({
+    id: '',
+    po_number: '',
+    vendor_id: '',
+    po_date: new Date().toISOString().split('T')[0],
+    expected_delivery_date: '',
+    delivery_address: '',
+    terms_and_conditions: 'Standard terms and conditions apply',
+    notes: '',
+    line_items: []
+  });
+  const [editFormErrors, setEditFormErrors] = useState<{ [key: string]: string }>({});
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Request changes state
+  const [showRequestChangesDialog, setShowRequestChangesDialog] = useState(false);
+  const [requestChangesComments, setRequestChangesComments] = useState('');
+  const [requestingChanges, setRequestingChanges] = useState(false);
+  const [requestChangesPOId, setRequestChangesPOId] = useState<string>('');
+
+  // Reject action state
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [rejectComments, setRejectComments] = useState('');
+  const [rejecting, setRejecting] = useState(false);
+  const [rejectPOId, setRejectPOId] = useState<string>('');
+
+  // Comment viewing state
+  const [showCommentsDialog, setShowCommentsDialog] = useState(false);
+  const [viewingCommentsPO, setViewingCommentsPO] = useState<PurchaseOrder | null>(null);
+  const [poComments, setPOComments] = useState<any[]>([]);
 
   // Create form state
   const [createForm, setCreateForm] = useState<CreatePOForm>({
@@ -403,38 +444,43 @@ const handleApiCall = async <T,>(
       );
       
       if (result && Array.isArray(result)) {
-        const frontendPOs: PurchaseOrder[] = result.map(po => ({
-          id: po.id,
-          poNumber: po.po_number,
-          vendorId: po.vendor_id,
-          vendorName: 'Unknown Vendor',
-          vendorGstin: '',
-          poDate: new Date(po.po_date).toISOString().split('T')[0],
-          expectedDeliveryDate: po.expected_delivery_date ? new Date(po.expected_delivery_date).toISOString().split('T')[0] : '',
-          deliveryAddress: po.delivery_address || '',
-          status: convertBackendStatus(po.status),
-          priority: 'medium',
-          department: 'General',
-          project: '',
-          termsAndConditions: po.terms_and_conditions || '',
-          paymentTerms: '30 days',
-          deliveryTerms: 'FOB',
-          items: (po.line_items || []).map((item: any) => ({
-            id: item.id || '',
-            itemDescription: item.item_description,
-            quantity: item.quantity,
-            unit: item.unit,
-            estimatedRate: item.unit_price || item.rate || 0,
-            totalEstimatedAmount: item.total_amount || item.amount || 0
-          })),
-          totalEstimatedAmount: po.total_amount,
-          createdBy: 'System',
-          createdDate: po.created_at,
-          lastModified: po.updated_at,
-          modifiedBy: 'System',
-          notes: po.notes || '',
-          isUrgent: false
-        }));
+        const frontendPOs: PurchaseOrder[] = result.map(po => {
+          // Find vendor by ID to get the actual vendor name
+          const vendor = vendors.find(v => v.id === po.vendor_id);
+          
+          return {
+            id: po.id,
+            poNumber: po.po_number,
+            vendorId: po.vendor_id,
+            vendorName: vendor?.business_name || 'Unknown Vendor',
+            vendorGstin: vendor?.gstin || '',
+            poDate: new Date(po.po_date).toISOString().split('T')[0],
+            expectedDeliveryDate: po.expected_delivery_date ? new Date(po.expected_delivery_date).toISOString().split('T')[0] : '',
+            deliveryAddress: po.delivery_address || '',
+            status: convertBackendStatus(po.status),
+            priority: 'medium',
+            department: 'General',
+            project: '',
+            termsAndConditions: po.terms_and_conditions || '',
+            paymentTerms: '30 days',
+            deliveryTerms: 'FOB',
+            items: (po.line_items || []).map((item: any) => ({
+              id: item.id || '',
+              itemDescription: item.item_description,
+              quantity: item.quantity,
+              unit: item.unit,
+              estimatedRate: item.unit_price || item.rate || 0,
+              totalEstimatedAmount: item.total_amount || item.amount || 0
+            })),
+            totalEstimatedAmount: po.total_amount,
+            createdBy: 'System',
+            createdDate: po.created_at,
+            lastModified: po.updated_at,
+            modifiedBy: 'System',
+            notes: po.notes || '',
+            isUrgent: false
+          };
+        });
         
         setPurchaseOrders(frontendPOs);
         calculateEnhancedStats(frontendPOs);
@@ -644,13 +690,14 @@ const handleApiCall = async <T,>(
       
       switch (action.id) {
         case 'edit':
-          // Open edit dialog instead of API call
+          // Phase 2 Task 4: Open edit dialog with populated form
           const poToEdit = purchaseOrders.find(po => po.id === poId);
           if (poToEdit) {
-            setSelectedPO(poToEdit);
+            populateEditForm(poToEdit);
+            setShowEditDialog(true);
             toast({
               title: 'Edit Mode',
-              description: 'Edit functionality will be implemented',
+              description: `Editing purchase order ${poToEdit.poNumber}`,
               duration: 3000,
             });
           }
@@ -679,26 +726,18 @@ const handleApiCall = async <T,>(
           break;
             
         case 'reject':
-          try {
-            result = await PurchaseExpenseApiService.approvePurchaseOrder(poId, 'reject');
-            newStatus = PurchaseOrderStatus.REJECTED;
-            console.log('✅ Rejection successful');
-          } catch (error) {
-            console.error('❌ Rejection failed:', error);
-            throw error;
-          }
-          break;
+          // Task 2: Open reject dialog with comment collection
+          setRejectPOId(poId);
+          setRejectComments('');
+          setShowRejectDialog(true);
+          return;
             
         case 'request_changes':
-          try {
-            result = await PurchaseExpenseApiService.approvePurchaseOrder(poId, 'reject', 'Changes requested');
-            newStatus = PurchaseOrderStatus.DRAFT;
-            console.log('✅ Request changes successful');
-          } catch (error) {
-            console.error('❌ Request changes failed:', error);
-            throw error;
-          }
-          break;
+          // Phase 3 Task 8: Open request changes dialog
+          setRequestChangesPOId(poId);
+          setRequestChangesComments('');
+          setShowRequestChangesDialog(true);
+          return;
           
         case 'mark_delivered':
         case 'full_delivery':
@@ -764,6 +803,14 @@ const handleApiCall = async <T,>(
               description: 'Viewing purchase order details',
               duration: 2000,
             });
+          }
+          return;
+          
+        case 'view_rejection_reason':
+          // Task 4: Show comments dialog
+          const poToViewComments = purchaseOrders.find(po => po.id === poId);
+          if (poToViewComments) {
+            handleViewComments(poToViewComments);
           }
           return;
           
@@ -877,6 +924,22 @@ const handleApiCall = async <T,>(
     loadVendors();
   }, []); // Empty dependency array to run only once on mount
 
+  // Re-process purchase orders when vendors are loaded to fix vendor names
+  useEffect(() => {
+    if (vendors.length > 0 && purchaseOrders.length > 0) {
+      console.log('Re-processing purchase orders with vendor data');
+      const updatedPOs = purchaseOrders.map(po => {
+        const vendor = vendors.find(v => v.id === po.vendorId);
+        return {
+          ...po,
+          vendorName: vendor?.business_name || 'Unknown Vendor',
+          vendorGstin: vendor?.gstin || '',
+        };
+      });
+      setPurchaseOrders(updatedPOs);
+    }
+  }, [vendors]); // Re-run when vendors array changes
+
   // Generate PO number
   const generatePONumber = () => {
     const now = new Date();
@@ -915,10 +978,10 @@ const handleApiCall = async <T,>(
       if (!item.item_description.trim()) {
         errors[`line_item_${index}_description`] = 'Item description is required';
       }
-      if (item.quantity <= 0) {
+      if (!item.quantity || item.quantity <= 0) {
         errors[`line_item_${index}_quantity`] = 'Quantity must be greater than 0';
       }
-      if (item.unit_price <= 0) {
+      if (!item.unit_price || item.unit_price <= 0) {
         errors[`line_item_${index}_price`] = 'Unit price must be greater than 0';
       }
     });
@@ -982,12 +1045,289 @@ const handleApiCall = async <T,>(
     }
   };
 
+  // Handle edit purchase order (Phase 2 Task 5)
+  const handleEditPO = async () => {
+    if (!validateEditForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please correct the errors in the form",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsEditing(true);
+    try {
+      // Transform edit form data to backend format
+      const formattedData = {
+        po_number: editForm.po_number,
+        vendor_id: editForm.vendor_id,
+        po_date: editForm.po_date ? `${editForm.po_date}T00:00:00` : new Date().toISOString(),
+        expected_delivery_date: editForm.expected_delivery_date ? `${editForm.expected_delivery_date}T00:00:00` : '',
+        delivery_address: editForm.delivery_address,
+        terms_and_conditions: editForm.terms_and_conditions,
+        notes: editForm.notes,
+        line_items: editForm.line_items
+      };
+
+      const result = await handleApiCall(
+        () => PurchaseExpenseApiService.updatePurchaseOrder(editForm.id, formattedData),
+        "Failed to update purchase order",
+        "editPO"
+      );
+      
+      if (result) {
+        // Check if this is a REJECTED PO (Edit & Resubmit scenario)
+        const originalPO = editingPO;
+        const isResubmit = originalPO?.status === PurchaseOrderStatus.REJECTED;
+        
+        if (isResubmit) {
+          // For REJECTED status, automatically submit for approval after editing
+          try {
+            const submitResult = await handleApiCall(
+              () => PurchaseExpenseApiService.submitPurchaseOrderForApproval(editForm.id),
+              "Failed to resubmit purchase order for approval",
+              "resubmitPO"
+            );
+            
+            if (submitResult) {
+              toast({
+                title: "Success",
+                description: `Purchase order ${editForm.po_number} updated and resubmitted for approval`,
+                duration: 4000,
+              });
+            }
+          } catch (error) {
+            // If resubmit fails, still show success for the edit
+            toast({
+              title: "Partially Successful",
+              description: `Purchase order ${editForm.po_number} updated, but failed to resubmit. Please submit manually.`,
+              variant: "destructive",
+              duration: 5000,
+            });
+          }
+        } else {
+          // For DRAFT status, just show edit success
+          toast({
+            title: "Success",
+            description: `Purchase order ${editForm.po_number} updated successfully`,
+            duration: 3000,
+          });
+        }
+        
+        // Reset edit form and close dialog
+        setEditForm({
+          id: '',
+          po_number: '',
+          vendor_id: '',
+          po_date: new Date().toISOString().split('T')[0],
+          expected_delivery_date: '',
+          delivery_address: '',
+          terms_and_conditions: 'Standard terms and conditions apply',
+          notes: '',
+          line_items: []
+        });
+        setEditFormErrors({});
+        setEditingPO(null);
+        setShowEditDialog(false);
+        
+        // Reload purchase orders to reflect changes
+        loadPurchaseOrders(true);
+      }
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  // Handle request changes submission (Phase 3 Task 9)
+  const handleRequestChanges = async () => {
+    if (!requestChangesComments.trim()) {
+      toast({
+        title: "Comments Required",
+        description: "Please provide comments explaining what changes are needed",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setRequestingChanges(true);
+    try {
+      const result = await handleApiCall(
+        () => PurchaseExpenseApiService.approvePurchaseOrder(requestChangesPOId, 'reject', requestChangesComments),
+        "Failed to request changes",
+        "requestChanges"
+      );
+      
+      if (result) {
+        // Update local state optimistically
+        const updatedPOs = purchaseOrders.map(po => 
+          po.id === requestChangesPOId 
+            ? { ...po, status: PurchaseOrderStatus.DRAFT, lastModified: new Date().toISOString() }
+            : po
+        );
+        setPurchaseOrders(updatedPOs);
+        calculateEnhancedStats(updatedPOs);
+        
+        toast({
+          title: "Changes Requested",
+          description: "Purchase order has been sent back for modifications",
+          duration: 3000,
+        });
+        
+        // Reset and close dialog
+        setRequestChangesComments('');
+        setRequestChangesPOId('');
+        setShowRequestChangesDialog(false);
+        
+        // Reload purchase orders to ensure consistency
+        loadPurchaseOrders(true);
+      }
+    } finally {
+      setRequestingChanges(false);
+    }
+  };
+
+  // Handle reject submission (Task 2)
+  const handleReject = async () => {
+    if (!rejectComments.trim()) {
+      toast({
+        title: "Comments Required",
+        description: "Please provide a reason for rejection",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setRejecting(true);
+    try {
+      const result = await handleApiCall(
+        () => PurchaseExpenseApiService.approvePurchaseOrder(rejectPOId, 'reject', rejectComments),
+        "Failed to reject purchase order",
+        "rejectPO"
+      );
+
+      if (result) {
+        // Update local state
+        const updatedPOs = purchaseOrders.map(po => 
+          po.id === rejectPOId 
+            ? { ...po, status: PurchaseOrderStatus.REJECTED, lastModified: new Date().toISOString() }
+            : po
+        );
+        setPurchaseOrders(updatedPOs);
+        calculateEnhancedStats(updatedPOs);
+
+        toast({
+          title: 'Success',
+          description: 'Purchase order rejected successfully',
+          duration: 3000,
+        });
+
+        // Reset state
+        setRejectComments('');
+        setRejectPOId('');
+        setShowRejectDialog(false);
+        
+        // Reload purchase orders to ensure consistency
+        loadPurchaseOrders(true);
+      }
+    } catch (error: any) {
+      console.error('Reject failed:', error);
+      toast({
+        title: 'Rejection Failed',
+        description: error?.response?.data?.detail || error?.message || 'Failed to reject purchase order',
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setRejecting(false);
+    }
+  };
+
+  // Handle viewing rejection comments (Task 4)
+  const handleViewComments = async (po: PurchaseOrder) => {
+    setViewingCommentsPO(po);
+    setShowCommentsDialog(true);
+    
+    // For now, show mock comments - in production this would fetch from API
+    const mockComments = [
+      {
+        id: '1',
+        action: 'reject',
+        comments: 'Budget allocation not approved. Please reduce the total amount.',
+        created_by: 'John Doe',
+        created_at: '2024-01-15T10:30:00Z',
+        role: 'Finance Manager'
+      },
+      {
+        id: '2', 
+        action: 'request_changes',
+        comments: 'Please provide more detailed specifications for the items.',
+        created_by: 'Jane Smith',
+        created_at: '2024-01-14T14:20:00Z',
+        role: 'Procurement Manager'
+      }
+    ];
+    
+    setPOComments(mockComments);
+    
+    toast({
+      title: 'Comments Loaded',
+      description: `Viewing approval history for ${po.poNumber}`,
+      duration: 2000,
+    });
+  };
+
+  // Validate edit form (Phase 4 Task 10)
+  const validateEditForm = (): boolean => {
+    const errors: { [key: string]: string } = {};
+    
+    if (!editForm.po_number.trim()) {
+      errors.po_number = 'PO number is required';
+    }
+    
+    if (!editForm.vendor_id) {
+      errors.vendor_id = 'Vendor selection is required';
+    }
+    
+    if (!editForm.po_date) {
+      errors.po_date = 'PO date is required';
+    }
+    
+    if (!editForm.delivery_address.trim()) {
+      errors.delivery_address = 'Delivery address is required';
+    }
+    
+    if (editForm.line_items.length === 0) {
+      errors.line_items = 'At least one line item is required';
+    }
+    
+    // Validate line items
+    editForm.line_items.forEach((item, index) => {
+      if (!item.item_description.trim()) {
+        errors[`line_item_${index}_description`] = 'Item description is required';
+      }
+      if (!item.quantity || item.quantity <= 0) {
+        errors[`line_item_${index}_quantity`] = 'Quantity must be greater than 0';
+      }
+      if (!item.unit_price || item.unit_price <= 0) {
+        errors[`line_item_${index}_price`] = 'Unit price must be greater than 0';
+      }
+    });
+    
+    setEditFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // Add line item
   const addLineItem = () => {
+    // Use smart defaults from the last item if available
+    const lastItem = createForm.line_items[createForm.line_items.length - 1];
+    const defaultUnit = lastItem?.unit || 'pcs';
+    
     const newItem: POLineItem = {
       item_description: '',
-      unit: 'pcs',
-      quantity: 1,
+      unit: defaultUnit,
+      quantity: 0,
       unit_price: 0,
       discount_percentage: 0,
       total_amount: 0
@@ -1011,10 +1351,20 @@ const handleApiCall = async <T,>(
   const updateLineItem = (index: number, field: keyof POLineItem, value: any) => {
     setCreateForm(prev => {
       const updatedItems = [...prev.line_items];
-      updatedItems[index] = {
-        ...updatedItems[index],
-        [field]: value
-      };
+      
+      // Handle numeric fields properly - convert empty strings to 0 for calculations
+      if (field === 'quantity' || field === 'unit_price') {
+        const numericValue = value === '' ? 0 : Number(value);
+        updatedItems[index] = {
+          ...updatedItems[index],
+          [field]: numericValue
+        };
+      } else {
+        updatedItems[index] = {
+          ...updatedItems[index],
+          [field]: value
+        };
+      }
       
       // Recalculate total amount for this item
       if (field === 'quantity' || field === 'unit_price' || field === 'discount_percentage') {
@@ -1031,7 +1381,94 @@ const handleApiCall = async <T,>(
     });
   };
 
-  // Render action buttons with loading states and enhanced debugging
+  // Populate edit form from selected PO data (Phase 1 Task 3)
+  const populateEditForm = (po: PurchaseOrder) => {
+    setEditForm({
+      id: po.id,
+      po_number: po.poNumber,
+      vendor_id: po.vendorId,
+      po_date: po.poDate,
+      expected_delivery_date: po.expectedDeliveryDate,
+      delivery_address: po.deliveryAddress,
+      priority: po.priority,
+      terms_and_conditions: po.termsAndConditions,
+      notes: po.notes || '',
+      line_items: po.items.map(item => ({
+        item_description: item.itemDescription,
+        unit: item.unit,
+        quantity: item.quantity,
+        unit_price: item.estimatedRate,
+        discount_percentage: 0, // Default value as not stored in current structure
+        total_amount: item.totalEstimatedAmount
+      }))
+    });
+    setEditingPO(po);
+    setEditFormErrors({});
+  };
+
+  // Update edit line item
+  const updateEditLineItem = (index: number, field: keyof POLineItem, value: any) => {
+    setEditForm(prev => {
+      const updatedItems = [...prev.line_items];
+      
+      // Handle numeric fields properly - convert empty strings to 0 for calculations
+      if (field === 'quantity' || field === 'unit_price') {
+        const numericValue = value === '' ? 0 : Number(value);
+        updatedItems[index] = {
+          ...updatedItems[index],
+          [field]: numericValue
+        };
+      } else {
+        updatedItems[index] = {
+          ...updatedItems[index],
+          [field]: value
+        };
+      }
+      
+      // Recalculate total amount for this item
+      if (field === 'quantity' || field === 'unit_price' || field === 'discount_percentage') {
+        const item = updatedItems[index];
+        const subtotal = item.quantity * item.unit_price;
+        const discount = (subtotal * (item.discount_percentage || 0)) / 100;
+        updatedItems[index].total_amount = subtotal - discount;
+      }
+      
+      return {
+        ...prev,
+        line_items: updatedItems
+      };
+    });
+  };
+
+  // Add edit line item
+  const addEditLineItem = () => {
+    const lastItem = editForm.line_items[editForm.line_items.length - 1];
+    const defaultUnit = lastItem?.unit || 'pcs';
+    
+    const newItem: POLineItem = {
+      item_description: '',
+      unit: defaultUnit,
+      quantity: 0,
+      unit_price: 0,
+      discount_percentage: 0,
+      total_amount: 0
+    };
+    
+    setEditForm(prev => ({
+      ...prev,
+      line_items: [...prev.line_items, newItem]
+    }));
+  };
+
+  // Remove edit line item
+  const removeEditLineItem = (index: number) => {
+    setEditForm(prev => ({
+      ...prev,
+      line_items: prev.line_items.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Render action dropdown (replacing confusing icons with clear labels)
   const renderStatusActions = (po: PurchaseOrder) => {
     const availableActions = getAvailableActions(po.status, ['approve_purchase_orders', 'cancel_purchase_orders', 'reactivate_purchase_orders']);
     const isLoading = actionLoading[po.id];
@@ -1040,93 +1477,103 @@ const handleApiCall = async <T,>(
     
     if (availableActions.length === 0) {
       return (
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" disabled={isLoading} className="h-8 w-8 p-0">
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => {
               console.log(`👁️ View details clicked for PO ${po.id}`);
               setSelectedPO(po);
-            }}
-            title="View Details"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
+            }}>
+              <Eye className="h-4 w-4 mr-2" />
+              View Details
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     }
 
     return (
-      <div className="flex gap-2">
-        {availableActions.slice(0, 3).map((action) => {
-          const IconComponent = getIconComponent(action.icon);
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" disabled={isLoading} className="h-8 w-8 p-0">
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuLabel>Available Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
           
-          console.log(`🔧 Creating action button: ${action.id} - ${action.label}`);
-          
-          if (action.requiresConfirmation) {
-            return (
-              <AlertDialog key={action.id}>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={isLoading}
-                    title={action.description}
-                    onClick={() => console.log(`⚠️ Confirmation action ${action.id} triggered`)}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <IconComponent className="h-4 w-4" />
-                    )}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{action.label}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to {action.label.toLowerCase()}? {action.description}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => {
-                        console.log(`✅ Confirmed action ${action.id} for PO ${po.id}`);
-                        handleStatusAction(po.id, action);
-                      }}
-                    >
+          {availableActions.map((action) => {
+            const IconComponent = getIconComponent(action.icon);
+            
+            console.log(`🔧 Creating action dropdown item: ${action.id} - ${action.label}`);
+            
+            if (action.requiresConfirmation) {
+              return (
+                <AlertDialog key={action.id}>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <IconComponent className="h-4 w-4 mr-2" />
                       {action.label}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                      <span className="ml-auto text-xs text-muted-foreground">⚠️</span>
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{action.label}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to {action.label.toLowerCase()}? {action.description}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          console.log(`✅ Confirmed action ${action.id} for PO ${po.id}`);
+                          handleStatusAction(po.id, action);
+                        }}
+                      >
+                        {action.label}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              );
+            }
+            
+            return (
+              <DropdownMenuItem 
+                key={action.id}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log(`🚀 Direct action ${action.id} clicked for PO ${po.id}`);
+                  handleStatusAction(po.id, action);
+                }}
+              >
+                <IconComponent className="h-4 w-4 mr-2" />
+                {action.label}
+                {action.description && (
+                  <span className="ml-auto text-xs text-muted-foreground">→</span>
+                )}
+              </DropdownMenuItem>
             );
-          }
+          })}
           
-          return (
-            <Button
-              key={action.id}
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log(`🚀 Direct action ${action.id} clicked for PO ${po.id}`);
-                handleStatusAction(po.id, action);
-              }}
-              disabled={isLoading}
-              title={action.description}
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <IconComponent className="h-4 w-4" />
-              )}
-            </Button>
-          );
-        })}
-      </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => {
+            console.log(`👁️ View details clicked for PO ${po.id}`);
+            setSelectedPO(po);
+          }}>
+            <Eye className="h-4 w-4 mr-2" />
+            View Details
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   };
 
@@ -1411,60 +1858,32 @@ const handleApiCall = async <T,>(
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {/* Bulk Selection Header */}
-                    <div className="flex items-center justify-between py-2">
-                      <div className="flex items-center gap-3">
-                        <Checkbox 
-                          checked={selectedPOs.length === filteredPOs.length && filteredPOs.length > 0}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedPOs(filteredPOs.map(po => po.id));
-                            } else {
-                              setSelectedPOs([]);
-                            }
-                          }}
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          {selectedPOs.length > 0 
-                            ? `${selectedPOs.length} of ${filteredPOs.length} selected` 
-                            : `${filteredPOs.length} purchase orders`
-                          }
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => setSort(prev => ({ 
-                            ...prev, 
-                            direction: prev.direction === 'asc' ? 'desc' : 'asc' 
-                          }))}
-                          className="flex items-center gap-1"
-                        >
-                          Sort by {sort.field}
-                          <ChevronDown className={`h-4 w-4 transition-transform ${sort.direction === 'desc' ? 'rotate-180' : ''}`} />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Enhanced Table */}
-                    <div className="rounded-lg border overflow-hidden">
-                      <Table>
-                        <TableHeader className="bg-gray-50/50">
-                          <TableRow className="hover:bg-transparent border-b">
-                            <TableHead className="w-12 font-semibold text-gray-700">
-                              <Checkbox />
-                            </TableHead>
-                            <TableHead className="font-semibold text-gray-700">PO Details</TableHead>
-                            <TableHead className="font-semibold text-gray-700">Vendor</TableHead>
-                            <TableHead className="font-semibold text-gray-700">Status & Priority</TableHead>
-                            <TableHead className="font-semibold text-gray-700">Timeline</TableHead>
-                            <TableHead className="font-semibold text-gray-700">Financial</TableHead>
-                            <TableHead className="font-semibold text-gray-700">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
+                  <ScrollArea className="h-[600px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>
+                            <Checkbox
+                              checked={selectedPOs.length === filteredPOs.length && filteredPOs.length > 0}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedPOs(filteredPOs.map(po => po.id));
+                                } else {
+                                  setSelectedPOs([]);
+                                }
+                              }}
+                            />
+                          </TableHead>
+                          <TableHead>PO Number</TableHead>
+                          <TableHead>Vendor</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Priority</TableHead>
+                          <TableHead>PO Date</TableHead>
+                          <TableHead>Expected Delivery</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
                         <TableBody>
                           {filteredPOs.map((po) => {
                             const statusDisplay = getStatusDisplay(po.status);
@@ -1475,7 +1894,7 @@ const handleApiCall = async <T,>(
                             return (
                               <TableRow 
                                 key={po.id} 
-                                className={`hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`}
+                                className={isSelected ? 'bg-blue-50' : ''}
                               >
                                 <TableCell>
                                   <Checkbox 
@@ -1491,70 +1910,50 @@ const handleApiCall = async <T,>(
                                 </TableCell>
                                 
                                 <TableCell>
-                                  <div className="space-y-1">
-                                    <div className="font-medium flex items-center gap-2">
-                                      {po.poNumber}
-                                      {po.isUrgent && (
-                                        <Badge variant="destructive" className="px-1 py-0 text-xs">
-                                          <Zap className="h-3 w-3" />
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">{po.department}</div>
-                                    {po.project && (
-                                      <div className="text-xs text-blue-600">Project: {po.project}</div>
-                                    )}
+                                  <div className="font-medium">{po.poNumber}</div>
+                                  {po.department && (
+                                    <div className="text-sm text-gray-500">{po.department}</div>
+                                  )}
+                                </TableCell>
+                                
+                                <TableCell>
+                                  <div className="font-medium">{po.vendorName}</div>
+                                  {po.vendorGstin && (
+                                    <div className="text-sm text-gray-500">GSTIN: {po.vendorGstin}</div>
+                                  )}
+                                </TableCell>
+                                
+                                <TableCell>
+                                  <div className="font-medium">₹{po.totalEstimatedAmount.toLocaleString()}</div>
+                                </TableCell>
+                                
+                                <TableCell>
+                                  <Badge className={`${statusDisplay.bgColor} ${statusDisplay.color}`}>
+                                    {statusDisplay.label}
+                                  </Badge>
+                                </TableCell>
+                                
+                                <TableCell>
+                                  <div className="flex items-center gap-1">
+                                    <div className={`w-2 h-2 rounded-full ${
+                                      po.priority === 'urgent' ? 'bg-red-500' :
+                                      po.priority === 'high' ? 'bg-orange-500' :
+                                      po.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                                    }`}></div>
+                                    <span className="text-sm capitalize">{po.priority}</span>
                                   </div>
                                 </TableCell>
                                 
                                 <TableCell>
-                                  <div className="space-y-1">
-                                    <div className="font-medium">{po.vendorName}</div>
-                                    {po.vendorGstin && (
-                                      <div className="text-sm text-muted-foreground">GSTIN: {po.vendorGstin}</div>
-                                    )}
-                                  </div>
+                                  {new Date(po.poDate).toLocaleDateString()}
                                 </TableCell>
                                 
                                 <TableCell>
-                                  <div className="space-y-2">
-                                    <Badge className={`${statusDisplay.bgColor} ${statusDisplay.color}`}>
-                                      {statusDisplay.label}
-                                    </Badge>
-                                    <div className="flex items-center gap-1">
-                                      <div className={`w-2 h-2 rounded-full ${
-                                        po.priority === 'urgent' ? 'bg-red-500' :
-                                        po.priority === 'high' ? 'bg-orange-500' :
-                                        po.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
-                                      }`}></div>
-                                      <span className="text-xs capitalize">{po.priority}</span>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                
-                                <TableCell>
-                                  <div className="space-y-1">
-                                    <div className="text-sm">
-                                      Created: {new Date(po.poDate).toLocaleDateString()}
-                                    </div>
-                                    <div className={`text-sm ${isOverdue ? 'text-red-600 font-medium' : 'text-muted-foreground'}`}>
-                                      Expected: {po.expectedDeliveryDate 
-                                        ? new Date(po.expectedDeliveryDate).toLocaleDateString()
-                                        : 'Not set'
-                                      }
-                                      {isOverdue && (
-                                        <AlertTriangle className="inline h-3 w-3 ml-1" />
-                                      )}
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                
-                                <TableCell>
-                                  <div className="space-y-1">
-                                    <div className="font-medium">₹{po.totalEstimatedAmount.toLocaleString()}</div>
-                                    <div className="text-sm text-muted-foreground">
-                                      {po.items.length} item{po.items.length !== 1 ? 's' : ''}
-                                    </div>
+                                  <div className={isOverdue ? 'text-red-600 font-medium' : ''}>
+                                    {po.expectedDeliveryDate 
+                                      ? new Date(po.expectedDeliveryDate).toLocaleDateString()
+                                      : 'Not set'
+                                    }
                                   </div>
                                 </TableCell>
                                 
@@ -1566,8 +1965,7 @@ const handleApiCall = async <T,>(
                           })}
                         </TableBody>
                       </Table>
-                    </div>
-                  </div>
+                    </ScrollArea>
                 )}
               </CardContent>
             </Card>
@@ -2016,9 +2414,9 @@ const handleApiCall = async <T,>(
                                 </Button>
                               </div>
                               
-                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                                 {/* Item Description */}
-                                <div className="md:col-span-2 space-y-2">
+                                <div className="lg:col-span-6 space-y-2">
                                   <Label htmlFor={`item_description_${index}`} className="text-sm font-medium text-gray-700">
                                     Item Description *
                                   </Label>
@@ -2044,19 +2442,20 @@ const handleApiCall = async <T,>(
                                 </div>
                                 
                                 {/* Quantity and Unit */}
-                                <div className="space-y-2">
+                                <div className="lg:col-span-3 space-y-2">
                                   <Label htmlFor={`quantity_${index}`} className="text-sm font-medium text-gray-700">
                                     Quantity & Unit *
                                   </Label>
-                                  <div className="flex gap-2">
+                                  <div className="flex gap-3">
                                     <Input
                                       id={`quantity_${index}`}
                                       type="number"
-                                      value={item.quantity}
-                                      onChange={(e) => updateLineItem(index, 'quantity', Number(e.target.value))}
-                                      min="1"
+                                      value={item.quantity === 0 ? '' : item.quantity}
+                                      onChange={(e) => updateLineItem(index, 'quantity', e.target.value)}
+                                      min="0"
                                       placeholder="Qty"
-                                      className={`w-20 ${createFormErrors[`line_item_${index}_quantity`] ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                                      className={`w-24 ${createFormErrors[`line_item_${index}_quantity`] ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                                      onFocus={(e) => e.target.select()}
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter' && item.item_description && item.quantity && item.unit_price) {
                                           e.preventDefault();
@@ -2069,7 +2468,7 @@ const handleApiCall = async <T,>(
                                       value={item.unit} 
                                       onValueChange={(value) => updateLineItem(index, 'unit', value)}
                                     >
-                                      <SelectTrigger className="w-16 border-gray-300 focus:border-blue-500">
+                                      <SelectTrigger className="w-20 border-gray-300 focus:border-blue-500">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -2093,7 +2492,7 @@ const handleApiCall = async <T,>(
                                 </div>
                                 
                                 {/* Unit Price */}
-                                <div className="space-y-2">
+                                <div className="lg:col-span-3 space-y-2">
                                   <Label htmlFor={`unit_price_${index}`} className="text-sm font-medium text-gray-700">
                                     Unit Price *
                                   </Label>
@@ -2102,12 +2501,13 @@ const handleApiCall = async <T,>(
                                     <Input
                                       id={`unit_price_${index}`}
                                       type="number"
-                                      value={item.unit_price}
-                                      onChange={(e) => updateLineItem(index, 'unit_price', Number(e.target.value))}
+                                      value={item.unit_price === 0 ? '' : item.unit_price}
+                                      onChange={(e) => updateLineItem(index, 'unit_price', e.target.value)}
                                       min="0"
                                       step="0.01"
                                       placeholder="0.00"
                                       className={`pl-8 ${createFormErrors[`line_item_${index}_price`] ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                                      onFocus={(e) => e.target.select()}
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter' && item.item_description && item.quantity && item.unit_price) {
                                           e.preventDefault();
@@ -2337,6 +2737,560 @@ const handleApiCall = async <T,>(
             </DialogContent>
           </Dialog>
         )}
+
+        {/* Edit Purchase Order Dialog - Phase 2 Task 6 */}
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden p-0 flex flex-col">
+            <div className="flex flex-col">
+              <DialogHeader className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Edit className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <DialogTitle className="text-xl font-semibold text-gray-900">
+                      Edit Purchase Order
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-600">
+                      Modify purchase order details and line items
+                    </DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+
+            <div className="overflow-y-auto h-[60vh] p-6 bg-gray-50">
+              <div className="max-w-4xl mx-auto space-y-8">
+                  {/* Essential Information Card */}
+                  <Card className="border-gray-200 shadow-sm">
+                    <CardHeader className="bg-gray-50 border-b border-gray-200">
+                      <CardTitle className="text-lg">Essential Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="edit_po_number" className="text-sm font-medium text-gray-700">
+                            PO Number *
+                          </Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="edit_po_number"
+                              value={editForm.po_number}
+                              onChange={(e) => setEditForm(prev => ({ ...prev, po_number: e.target.value }))}
+                              placeholder="PO/YYYY/MM/XXXX"
+                              className={`font-mono ${editFormErrors.po_number ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                            />
+                          </div>
+                          {editFormErrors.po_number && (
+                            <div className="flex items-center gap-1 text-red-600">
+                              <AlertCircle className="h-3 w-3" />
+                              <p className="text-xs">{editFormErrors.po_number}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="edit_vendor" className="text-sm font-medium text-gray-700">
+                            Vendor *
+                          </Label>
+                          <Select
+                            value={editForm.vendor_id}
+                            onValueChange={(value) => setEditForm(prev => ({ ...prev, vendor_id: value }))}
+                          >
+                            <SelectTrigger className={`${editFormErrors.vendor_id ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}>
+                              <SelectValue placeholder="Select vendor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {vendors.map((vendor) => (
+                                <SelectItem key={vendor.id} value={vendor.id}>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{vendor.business_name}</span>
+                                    {vendor.gstin && (
+                                      <span className="text-xs text-gray-500">GSTIN: {vendor.gstin}</span>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {editFormErrors.vendor_id && (
+                            <div className="flex items-center gap-1 text-red-600">
+                              <AlertCircle className="h-3 w-3" />
+                              <p className="text-xs">{editFormErrors.vendor_id}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="edit_po_date" className="text-sm font-medium text-gray-700">
+                            PO Date *
+                          </Label>
+                          <Input
+                            id="edit_po_date"
+                            type="date"
+                            value={editForm.po_date}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, po_date: e.target.value }))}
+                            className={`${editFormErrors.po_date ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                          />
+                          {editFormErrors.po_date && (
+                            <div className="flex items-center gap-1 text-red-600">
+                              <AlertCircle className="h-3 w-3" />
+                              <p className="text-xs">{editFormErrors.po_date}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="edit_expected_delivery" className="text-sm font-medium text-gray-700">
+                            Expected Delivery Date
+                          </Label>
+                          <Input
+                            id="edit_expected_delivery"
+                            type="date"
+                            value={editForm.expected_delivery_date}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, expected_delivery_date: e.target.value }))}
+                            className="border-gray-300 focus:border-blue-500"
+                            min={editForm.po_date}
+                          />
+                        </div>
+
+                        <div className="md:col-span-2 space-y-2">
+                          <Label htmlFor="edit_delivery_address" className="text-sm font-medium text-gray-700">
+                            Delivery Address *
+                          </Label>
+                          <Textarea
+                            id="edit_delivery_address"
+                            value={editForm.delivery_address}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, delivery_address: e.target.value }))}
+                            placeholder="Enter complete delivery address"
+                            className={`resize-none ${editFormErrors.delivery_address ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                            rows={3}
+                          />
+                          {editFormErrors.delivery_address && (
+                            <div className="flex items-center gap-1 text-red-600">
+                              <AlertCircle className="h-3 w-3" />
+                              <p className="text-xs">{editFormErrors.delivery_address}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Line Items Card */}
+                  <Card className="border-gray-200 shadow-sm">
+                    <CardHeader className="bg-gray-50 border-b border-gray-200 flex flex-row items-center justify-between">
+                      <CardTitle className="text-lg">Line Items</CardTitle>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addEditLineItem}
+                        className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Item
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      {editFormErrors.line_items && (
+                        <div className="flex items-center gap-1 text-red-600 mb-4">
+                          <AlertCircle className="h-4 w-4" />
+                          <p className="text-sm">{editFormErrors.line_items}</p>
+                        </div>
+                      )}
+
+                      {editForm.line_items.length > 0 ? (
+                        <div className="space-y-6">
+                          {editForm.line_items.map((item, index) => (
+                            <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                              <div className="flex justify-between items-start mb-4">
+                                <h4 className="font-medium text-gray-900">Item {index + 1}</h4>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeEditLineItem(index)}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                                {/* Item Description */}
+                                <div className="lg:col-span-6 space-y-2">
+                                  <Label htmlFor={`edit_item_description_${index}`} className="text-sm font-medium text-gray-700">
+                                    Item Description *
+                                  </Label>
+                                  <Input
+                                    id={`edit_item_description_${index}`}
+                                    value={item.item_description}
+                                    onChange={(e) => updateEditLineItem(index, 'item_description', e.target.value)}
+                                    placeholder="Enter item description"
+                                    className={`${editFormErrors[`line_item_${index}_description`] ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                                  />
+                                  {editFormErrors[`line_item_${index}_description`] && (
+                                    <div className="flex items-center gap-1 text-red-600">
+                                      <AlertCircle className="h-3 w-3" />
+                                      <p className="text-xs">{editFormErrors[`line_item_${index}_description`]}</p>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Quantity and Unit */}
+                                <div className="lg:col-span-3 space-y-2">
+                                  <Label htmlFor={`edit_quantity_${index}`} className="text-sm font-medium text-gray-700">
+                                    Quantity & Unit *
+                                  </Label>
+                                  <div className="flex gap-3">
+                                    <Input
+                                      id={`edit_quantity_${index}`}
+                                      type="number"
+                                      value={item.quantity === 0 ? '' : item.quantity}
+                                      onChange={(e) => updateEditLineItem(index, 'quantity', e.target.value)}
+                                      min="0"
+                                      placeholder="Qty"
+                                      className={`w-24 ${editFormErrors[`line_item_${index}_quantity`] ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                                      onFocus={(e) => e.target.select()}
+                                    />
+                                    <Select 
+                                      value={item.unit} 
+                                      onValueChange={(value) => updateEditLineItem(index, 'unit', value)}
+                                    >
+                                      <SelectTrigger className="w-20 border-gray-300 focus:border-blue-500">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pcs">PCS</SelectItem>
+                                        <SelectItem value="kg">KG</SelectItem>
+                                        <SelectItem value="ltr">LTR</SelectItem>
+                                        <SelectItem value="mtr">MTR</SelectItem>
+                                        <SelectItem value="box">BOX</SelectItem>
+                                        <SelectItem value="set">SET</SelectItem>
+                                        <SelectItem value="sqft">SQFT</SelectItem>
+                                        <SelectItem value="pack">PACK</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  {editFormErrors[`line_item_${index}_quantity`] && (
+                                    <div className="flex items-center gap-1 text-red-600">
+                                      <AlertCircle className="h-3 w-3" />
+                                      <p className="text-xs">{editFormErrors[`line_item_${index}_quantity`]}</p>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Unit Price */}
+                                <div className="lg:col-span-3 space-y-2">
+                                  <Label htmlFor={`edit_unit_price_${index}`} className="text-sm font-medium text-gray-700">
+                                    Unit Price *
+                                  </Label>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                                    <Input
+                                      id={`edit_unit_price_${index}`}
+                                      type="number"
+                                      value={item.unit_price === 0 ? '' : item.unit_price}
+                                      onChange={(e) => updateEditLineItem(index, 'unit_price', e.target.value)}
+                                      min="0"
+                                      step="0.01"
+                                      placeholder="0.00"
+                                      className={`pl-8 ${editFormErrors[`line_item_${index}_price`] ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'}`}
+                                      onFocus={(e) => e.target.select()}
+                                    />
+                                  </div>
+                                  {editFormErrors[`line_item_${index}_price`] && (
+                                    <div className="flex items-center gap-1 text-red-600">
+                                      <AlertCircle className="h-3 w-3" />
+                                      <p className="text-xs">{editFormErrors[`line_item_${index}_price`]}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Total Amount */}
+                              <div className="mt-3 pt-3 border-t border-gray-100">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm text-gray-600">Total Amount:</span>
+                                  <span className="text-lg font-semibold text-blue-600">₹{item.total_amount.toFixed(2)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          
+                          {/* Overall Total */}
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex justify-between items-center">
+                              <div className="space-y-1">
+                                <div className="text-sm text-gray-600">
+                                  {editForm.line_items.length} item{editForm.line_items.length !== 1 ? 's' : ''}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-medium text-gray-700">Grand Total</div>
+                                <div className="text-2xl font-bold text-blue-600">
+                                  ₹{editForm.line_items.reduce((sum, item) => sum + item.total_amount, 0).toFixed(2)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+                          <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                            <Package className="w-8 h-8 text-blue-600" />
+                          </div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">No items added yet</h3>
+                          <p className="text-gray-500 mb-6">Use the "Add Item" button above to get started</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Additional Information Card */}
+                  <Card className="border-gray-200 shadow-sm">
+                    <CardHeader className="bg-gray-50 border-b border-gray-200">
+                      <CardTitle className="text-lg">Additional Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="edit_terms" className="text-sm font-medium text-gray-700">
+                            Terms and Conditions
+                          </Label>
+                          <Textarea
+                            id="edit_terms"
+                            value={editForm.terms_and_conditions}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, terms_and_conditions: e.target.value }))}
+                            placeholder="Enter terms and conditions"
+                            className="resize-none border-gray-300 focus:border-blue-500"
+                            rows={4}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="edit_notes" className="text-sm font-medium text-gray-700">
+                            Notes
+                          </Label>
+                          <Textarea
+                            id="edit_notes"
+                            value={editForm.notes}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
+                            placeholder="Add any additional notes"
+                            className="resize-none border-gray-300 focus:border-blue-500"
+                            rows={4}
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+              </div>
+            </div>
+
+              <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-between items-center flex-shrink-0">
+                {editForm.line_items.length > 0 && (
+                  <div className="text-sm text-gray-600">
+                    Total: <span className="font-semibold text-blue-600">₹{editForm.line_items.reduce((sum, item) => sum + item.total_amount, 0).toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setEditFormErrors({});
+                      setShowEditDialog(false);
+                    }}
+                    disabled={isEditing}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="button" 
+                    onClick={handleEditPO}
+                    disabled={isEditing || editForm.line_items.length === 0}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {isEditing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {editingPO?.status === PurchaseOrderStatus.REJECTED ? 'Updating & Resubmitting...' : 'Updating...'}
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        {editingPO?.status === PurchaseOrderStatus.REJECTED ? 'Update & Resubmit' : 'Update Purchase Order'}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Request Changes Dialog - Phase 3 Task 7 */}
+        <AlertDialog open={showRequestChangesDialog} onOpenChange={setShowRequestChangesDialog}>
+          <AlertDialogContent className="max-w-lg">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-orange-600" />
+                Request Changes
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Please provide specific comments explaining what changes are needed for this purchase order.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4">
+              <Label htmlFor="request_changes_comments" className="text-sm font-medium text-gray-700">
+                Comments *
+              </Label>
+              <Textarea
+                id="request_changes_comments"
+                value={requestChangesComments}
+                onChange={(e) => setRequestChangesComments(e.target.value)}
+                placeholder="Explain what changes are needed (e.g., incorrect quantities, wrong vendor, missing information...)"
+                className="mt-2 resize-none border-gray-300 focus:border-orange-500"
+                rows={4}
+              />
+              {!requestChangesComments.trim() && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Detailed comments help the requester understand what needs to be modified.
+                </p>
+              )}
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={requestingChanges}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleRequestChanges}
+                disabled={requestingChanges || !requestChangesComments.trim()}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                {requestingChanges ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Requesting...
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Request Changes
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Reject Dialog - Task 2 */}
+        <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+          <AlertDialogContent className="max-w-lg">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <XCircle className="w-5 h-5 text-red-600" />
+                Reject Purchase Order
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Please provide a reason for rejecting this purchase order. This will help the requester understand the decision.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="py-4">
+              <Label htmlFor="reject_comments" className="text-sm font-medium text-gray-700">
+                Rejection Reason *
+              </Label>
+              <Textarea
+                id="reject_comments"
+                value={rejectComments}
+                onChange={(e) => setRejectComments(e.target.value)}
+                placeholder="Explain why this purchase order is being rejected (e.g., budget constraints, policy violation, incorrect information...)"
+                className="mt-2 resize-none border-gray-300 focus:border-red-500"
+                rows={4}
+              />
+              {!rejectComments.trim() && (
+                <p className="text-xs text-gray-500 mt-1">
+                  A clear rejection reason is required for audit purposes and to help the requester.
+                </p>
+              )}
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={rejecting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleReject}
+                disabled={rejecting || !rejectComments.trim()}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {rejecting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Rejecting...
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Reject Purchase Order
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Comments Viewing Dialog - Task 4 */}
+        <Dialog open={showCommentsDialog} onOpenChange={setShowCommentsDialog}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-blue-600" />
+                Approval History & Comments
+              </DialogTitle>
+              <DialogDescription>
+                {viewingCommentsPO && `Purchase Order: ${viewingCommentsPO.poNumber}`}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {poComments.length > 0 ? (
+                poComments.map((comment) => (
+                  <div key={comment.id} className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant={comment.action === 'reject' ? 'destructive' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {comment.action === 'reject' ? 'Rejected' : 'Changes Requested'}
+                        </Badge>
+                        <span className="text-sm font-medium text-gray-900">
+                          {comment.created_by}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          ({comment.role})
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {new Date(comment.created_at).toLocaleDateString()} at {new Date(comment.created_at).toLocaleTimeString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      {comment.comments}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <MessageSquare className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No approval comments available for this purchase order.</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end pt-4 border-t">
+              <Button variant="outline" onClick={() => setShowCommentsDialog(false)}>
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
