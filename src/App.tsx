@@ -32,7 +32,7 @@ import AuthCallback from './pages/AuthCallback';
 
 // Purchases & Expenses pages
 import VendorMaster from './pages/VendorMaster';
-import PurchaseOrders from './pages/PurchaseOrders';
+import PurchaseOrdersEnhanced from './pages/PurchaseOrdersEnhanced';
 import GoodsReceiptNote from './pages/GoodsReceiptNote';
 import PurchaseBills from './pages/PurchaseBills';
 import ExpenseManagement from './pages/ExpenseManagement';
@@ -40,6 +40,12 @@ import TDSCompliance from './pages/TDSCompliance';
 import ITCManagement from './pages/ITCManagement';
 import PayablesAging from './pages/PayablesAging';
 import LandedCostAccounting from './pages/LandedCostAccounting';
+
+// Bank Management pages
+import BankManagement from './pages/BankManagement';
+
+// Test pages
+import TestBackendIntegration from './pages/TestBackendIntegration';
 
 // Invoicing & Sales pages
 import CustomerMaster from './pages/CustomerMaster';
@@ -164,7 +170,7 @@ function App() {
               } />
               <Route path="/purchase-orders" element={
                 <ProtectedRoute>
-                  <PurchaseOrders />
+                  <PurchaseOrdersEnhanced />
                 </ProtectedRoute>
               } />
               <Route path="/goods-receipt-note" element={
@@ -200,6 +206,20 @@ function App() {
               <Route path="/landed-cost-accounting" element={
                 <ProtectedRoute>
                   <LandedCostAccounting />
+                </ProtectedRoute>
+              } />
+              
+              {/* Bank Management Routes */}
+              <Route path="/bank-management" element={
+                <ProtectedRoute>
+                  <BankManagement />
+                </ProtectedRoute>
+              } />
+              
+              {/* Test pages */}
+              <Route path="/test-backend-integration" element={
+                <ProtectedRoute>
+                  <TestBackendIntegration />
                 </ProtectedRoute>
               } />
               
