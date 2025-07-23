@@ -33,6 +33,7 @@ import AuthCallback from './pages/AuthCallback';
 // Purchases & Expenses pages
 import VendorMaster from './pages/VendorMaster';
 import PurchaseOrdersEnhanced from './pages/PurchaseOrdersEnhanced';
+import GRNManagement from './pages/GRNManagement';
 import GoodsReceiptNote from './pages/GoodsReceiptNote';
 import PurchaseBills from './pages/PurchaseBills';
 import ExpenseManagement from './pages/ExpenseManagement';
@@ -175,7 +176,7 @@ function App() {
               } />
               <Route path="/goods-receipt-note" element={
                 <ProtectedRoute>
-                  <GoodsReceiptNote />
+                  <GRNManagement />
                 </ProtectedRoute>
               } />
               <Route path="/purchase-bills" element={
