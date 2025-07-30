@@ -1,95 +1,95 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { PurchaseExpenseApiService } from '@/lib/purchaseExpenseApi';
+import { VendorApiService } from '@/lib/vendor.api';
+import { PurchaseOrderApiService } from '@/lib/purchaseOrder.api';
+import { GRNApiService } from '@/lib/grn.api';
+
+interface TestResults {
+  vendors?: any[];
+  purchaseOrders?: any[];
+  grns?: any[];
+}
 
 const TestBackendIntegration = () => {
-  const [loading, setLoading] = useState(false);
-  const [testResults, setTestResults] = useState<any[]>([]);
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<TestResults | null>(null);
 
-  const runTests = async () => {
+  const testVendorAPI = async () => {
     setLoading(true);
-    const results: any[] = [];
-
-    // Test 1: Get Vendors
     try {
-      console.log('🧪 Testing vendor API...');
-      const vendors = await PurchaseExpenseApiService.getVendors(0, 5);
-      results.push({
-        test: 'Get Vendors',
-        status: 'success',
-        data: vendors,
-        message: `Found ${vendors.length} vendors`
+      console.log('Testing Vendor API...');
+      const vendors = await VendorApiService.getVendors(0, 5);
+      console.log('Vendors:', vendors);
+      setResults({ vendors });
+      
+      toast({
+        title: "Success",
+        description: `Loaded ${vendors.length} vendors successfully`,
       });
     } catch (error) {
-      results.push({
-        test: 'Get Vendors',
-        status: 'error',
-        error: error,
-        message: 'Failed to fetch vendors'
+      console.error('Vendor API test failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to test Vendor API",
+        variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-
-    // Test 2: Get Purchase Orders
-    try {
-      console.log('🧪 Testing purchase orders API...');
-      const purchaseOrders = await PurchaseExpenseApiService.getPurchaseOrders();
-      results.push({
-        test: 'Get Purchase Orders',
-        status: 'success',
-        data: purchaseOrders,
-        message: `Found ${purchaseOrders.length} purchase orders`
-      });
-    } catch (error) {
-      results.push({
-        test: 'Get Purchase Orders',
-        status: 'error',
-        error: error,
-        message: 'Failed to fetch purchase orders'
-      });
-    }
-
-    // Test 3: Get Expenses
-    try {
-      console.log('🧪 Testing expenses API...');
-      const expenses = await PurchaseExpenseApiService.getExpenses();
-      results.push({
-        test: 'Get Expenses',
-        status: 'success',
-        data: expenses,
-        message: `Found ${expenses.length} expenses`
-      });
-    } catch (error) {
-      results.push({
-        test: 'Get Expenses',
-        status: 'error',
-        error: error,
-        message: 'Failed to fetch expenses'
-      });
-    }
-
-    setTestResults(results);
-    setLoading(false);
-
-    // Show summary toast
-    const successCount = results.filter(r => r.status === 'success').length;
-    const totalTests = results.length;
-    
-    toast({
-      title: "Integration Test Complete",
-      description: `${successCount}/${totalTests} tests passed`,
-      variant: successCount === totalTests ? "default" : "destructive",
-    });
   };
 
-  useEffect(() => {
-    // Auto-run tests on component mount
-    runTests();
-  }, []);
+  const testPurchaseOrderAPI = async () => {
+    setLoading(true);
+    try {
+      console.log('Testing Purchase Order API...');
+      const purchaseOrders = await PurchaseOrderApiService.getPurchaseOrders();
+      console.log('Purchase Orders:', purchaseOrders);
+      setResults({ purchaseOrders });
+      
+      toast({
+        title: "Success",
+        description: `Loaded ${purchaseOrders.length} purchase orders successfully`,
+      });
+    } catch (error) {
+      console.error('Purchase Order API test failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to test Purchase Order API",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testGRNAPI = async () => {
+    setLoading(true);
+    try {
+      console.log('Testing GRN API...');
+      const grns = await GRNApiService.getGRNs();
+      console.log('GRNs:', grns);
+      setResults({ grns });
+      
+      toast({
+        title: "Success",
+        description: `Loaded ${grns.length} GRNs successfully`,
+      });
+    } catch (error) {
+      console.error('GRN API test failed:', error);
+      toast({
+        title: "Error",
+        description: "Failed to test GRN API",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
@@ -117,7 +117,7 @@ const TestBackendIntegration = () => {
             <div className="flex justify-between items-center">
               <span>Test Status:</span>
               <Button 
-                onClick={runTests} 
+                onClick={testVendorAPI} 
                 disabled={loading}
                 className="flex items-center gap-2"
               >
@@ -132,43 +132,75 @@ const TestBackendIntegration = () => {
               </Button>
             </div>
 
-            {testResults.length > 0 && (
+            {results && (
               <div className="space-y-3">
-                {testResults.map((result, index) => (
-                  <div 
-                    key={index}
-                    className="flex items-center justify-between p-3 border rounded-lg bg-white"
-                  >
-                    <div className="flex items-center gap-3">
-                      {result.status === 'success' ? (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-500" />
-                      )}
-                      <div>
-                        <div className="font-medium">{result.test}</div>
-                        <div className="text-sm text-gray-600">{result.message}</div>
+                <div 
+                  key="vendor-test"
+                  className="flex items-center justify-between p-3 border rounded-lg bg-white"
+                >
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <div>
+                      <div className="font-medium">Get Vendors</div>
+                      <div className="text-sm text-gray-600">
+                        {results.vendors ? `Loaded ${results.vendors.length} vendors` : 'Failed to load vendors'}
                       </div>
                     </div>
-                    <Badge 
-                      variant={result.status === 'success' ? 'default' : 'destructive'}
-                    >
-                      {result.status}
-                    </Badge>
                   </div>
-                ))}
+                  <Badge 
+                    variant={results.vendors ? 'default' : 'destructive'}
+                  >
+                    {results.vendors ? 'Success' : 'Error'}
+                  </Badge>
+                </div>
+
+                <div 
+                  key="purchase-order-test"
+                  className="flex items-center justify-between p-3 border rounded-lg bg-white"
+                >
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <div>
+                      <div className="font-medium">Get Purchase Orders</div>
+                      <div className="text-sm text-gray-600">
+                        {results.purchaseOrders ? `Loaded ${results.purchaseOrders.length} purchase orders` : 'Failed to load purchase orders'}
+                      </div>
+                    </div>
+                  </div>
+                  <Badge 
+                    variant={results.purchaseOrders ? 'default' : 'destructive'}
+                  >
+                    {results.purchaseOrders ? 'Success' : 'Error'}
+                  </Badge>
+                </div>
+
+                <div 
+                  key="grn-test"
+                  className="flex items-center justify-between p-3 border rounded-lg bg-white"
+                >
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <div>
+                      <div className="font-medium">Get GRNs</div>
+                      <div className="text-sm text-gray-600">
+                        {results.grns ? `Loaded ${results.grns.length} GRNs` : 'Failed to load GRNs'}
+                      </div>
+                    </div>
+                  </div>
+                  <Badge 
+                    variant={results.grns ? 'default' : 'destructive'}
+                  >
+                    {results.grns ? 'Success' : 'Error'}
+                  </Badge>
+                </div>
               </div>
             )}
 
-            {testResults.length > 0 && (
+            {results && (
               <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                 <h3 className="font-medium mb-2">Test Data Preview:</h3>
                 <pre className="text-xs overflow-auto max-h-40 bg-white p-2 rounded border">
-                  {JSON.stringify(testResults.map(r => ({
-                    test: r.test,
-                    status: r.status,
-                    dataCount: Array.isArray(r.data) ? r.data.length : 'N/A'
-                  })), null, 2)}
+                  {JSON.stringify(results, null, 2)}
                 </pre>
               </div>
             )}
@@ -183,23 +215,21 @@ const TestBackendIntegration = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">
-                  {testResults.filter(r => r.status === 'success').length}
+                  {results?.vendors?.length || 0}
                 </div>
-                <div className="text-sm text-gray-600">Tests Passed</div>
+                <div className="text-sm text-gray-600">Vendors</div>
               </div>
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-red-600">
-                  {testResults.filter(r => r.status === 'error').length}
+                  {results?.purchaseOrders?.length || 0}
                 </div>
-                <div className="text-sm text-gray-600">Tests Failed</div>
+                <div className="text-sm text-gray-600">Purchase Orders</div>
               </div>
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold text-purple-600">
-                  {testResults.reduce((sum, r) => 
-                    sum + (Array.isArray(r.data) ? r.data.length : 0), 0
-                  )}
+                  {results?.grns?.length || 0}
                 </div>
-                <div className="text-sm text-gray-600">Total Records</div>
+                <div className="text-sm text-gray-600">GRNs</div>
               </div>
             </div>
           </CardContent>

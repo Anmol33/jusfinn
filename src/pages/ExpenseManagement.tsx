@@ -82,7 +82,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { PurchaseExpenseApiService } from '@/lib/purchaseExpenseApi';
+import { ExpenseApiService } from '@/lib/expense.api';
 
 interface ExpenseItem {
   id: string;
@@ -733,14 +733,14 @@ const ExpenseManagement = () => {
       let savedExpense;
       if (editingExpense) {
         // Update existing expense via backend API
-        savedExpense = await PurchaseExpenseApiService.updateExpense(editingExpense.id, expenseApiData);
+        savedExpense = await ExpenseApiService.updateExpense(editingExpense.id, expenseApiData);
         toast({
           title: 'Success',
           description: 'Expense updated successfully',
         });
       } else {
         // Create new expense via backend API
-        savedExpense = await PurchaseExpenseApiService.createExpense(expenseApiData);
+        savedExpense = await ExpenseApiService.createExpense(expenseApiData);
         toast({
           title: 'Success',
           description: 'Expense created successfully',
@@ -802,7 +802,7 @@ const ExpenseManagement = () => {
   const handleApproveExpense = async (expenseId: string) => {
     try {
       // Approve expense via backend API
-      await PurchaseExpenseApiService.approveExpense(expenseId, 'approve');
+      await ExpenseApiService.approveExpense(expenseId, 'approve');
       
       // Reload expenses from backend to ensure UI is in sync
       await loadExpenses();
@@ -824,7 +824,7 @@ const ExpenseManagement = () => {
   const handleRejectExpense = async (expenseId: string) => {
     try {
       // Reject expense via backend API
-      await PurchaseExpenseApiService.approveExpense(expenseId, 'reject', 'Rejected by user');
+      await ExpenseApiService.approveExpense(expenseId, 'reject', 'Rejected by user');
       
       // Reload expenses from backend to ensure UI is in sync
       await loadExpenses();
@@ -846,7 +846,7 @@ const ExpenseManagement = () => {
   const handleDeleteExpense = async (expenseId: string) => {
     try {
       // Delete expense via backend API
-      await PurchaseExpenseApiService.deleteExpense(expenseId);
+      await ExpenseApiService.deleteExpense(expenseId);
       
       // Reload expenses from backend to ensure UI is in sync
       await loadExpenses();

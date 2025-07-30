@@ -3,7 +3,7 @@
  * Defines what actions are available for each purchase order status
  */
 
-import { PurchaseOrderStatus } from '@/lib/purchaseExpenseApi';
+import { PurchaseOrderStatus } from '@/lib/purchaseOrder.api';
 
 export interface StatusAction {
   id: string;
@@ -109,27 +109,18 @@ export const PURCHASE_ORDER_STATUS_CONFIG: Record<PurchaseOrderStatus, StatusCon
     canDelete: false,
     actions: [
       {
+        id: 'create_grn',
+        label: 'Create GRN',
+        icon: 'Package',
+        variant: 'default',
+        description: 'Create Goods Receipt Note for delivery'
+      },
+      {
         id: 'send_to_vendor',
         label: 'Send to Vendor',
         icon: 'Send',
-        variant: 'default',
-        description: 'Send purchase order to vendor'
-      },
-      {
-        id: 'partial_delivery',
-        label: 'Mark Partially Delivered',
-        icon: 'Package',
         variant: 'outline',
-        description: 'Record partial delivery of items',
-        nextStatus: PurchaseOrderStatus.PARTIALLY_DELIVERED
-      },
-      {
-        id: 'full_delivery',
-        label: 'Mark Delivered',
-        icon: 'CheckCircle2',
-        variant: 'default',
-        description: 'Mark all items as delivered',
-        nextStatus: PurchaseOrderStatus.DELIVERED
+        description: 'Send purchase order to vendor'
       },
       {
         id: 'cancel',
@@ -158,7 +149,7 @@ export const PURCHASE_ORDER_STATUS_CONFIG: Record<PurchaseOrderStatus, StatusCon
         icon: 'Package',
         variant: 'outline',
         description: 'Record delivery of remaining items',
-        nextStatus: PurchaseOrderStatus.DELIVERED
+        nextStatus: PurchaseOrderStatus.RECEIVED
       },
       {
         id: 'complete_partial',
@@ -253,32 +244,85 @@ export const PURCHASE_ORDER_STATUS_CONFIG: Record<PurchaseOrderStatus, StatusCon
     label: 'Rejected',
     color: 'text-red-700',
     bgColor: 'bg-red-100',
-    description: 'Purchase order was rejected during approval',
-    canEdit: true,
-    canDelete: true,
+    description: 'Purchase order has been rejected',
+    canEdit: false,
+    canDelete: false,
     actions: [
       {
-        id: 'edit',
-        label: 'Edit & Resubmit',
-        icon: 'Edit',
-        variant: 'default',
-        description: 'Modify and resubmit for approval',
-        nextStatus: PurchaseOrderStatus.DRAFT
-      },
-      {
-        id: 'view_rejection_reason',
-        label: 'View Rejection Reason',
-        icon: 'MessageSquare',
+        id: 'view_details',
+        label: 'View Rejection Details',
+        icon: 'Eye',
         variant: 'outline',
-        description: 'View reason for rejection'
+        description: 'View rejection reason and details'
       },
       {
-        id: 'delete',
-        label: 'Delete',
-        icon: 'Trash2',
-        variant: 'destructive',
-        description: 'Delete this purchase order',
-        requiresConfirmation: true
+        id: 'revise_resubmit',
+        label: 'Revise & Resubmit',
+        icon: 'Edit',
+        variant: 'outline',
+        description: 'Make changes and resubmit for approval',
+        nextStatus: PurchaseOrderStatus.DRAFT
+      }
+    ]
+  },
+
+  [PurchaseOrderStatus.ORDERED]: {
+    label: 'Ordered',
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-100',
+    description: 'Purchase order has been sent to vendor',
+    canEdit: false,
+    canDelete: false,
+    actions: [
+      {
+        id: 'track_delivery',
+        label: 'Track Delivery',
+        icon: 'Package',
+        variant: 'outline',
+        description: 'Track delivery status with vendor'
+      }
+    ]
+  },
+
+  [PurchaseOrderStatus.PARTIALLY_RECEIVED]: {
+    label: 'Partially Received',
+    color: 'text-orange-700',
+    bgColor: 'bg-orange-100',
+    description: 'Some items have been received via GRN',
+    canEdit: false,
+    canDelete: false,
+    actions: [
+      {
+        id: 'create_grn',
+        label: 'Create GRN for Remaining',
+        icon: 'Package',
+        variant: 'default',
+        description: 'Create GRN for remaining items'
+      },
+      {
+        id: 'view_grns',
+        label: 'View GRNs',
+        icon: 'Eye',
+        variant: 'outline',
+        description: 'View all GRNs for this PO'
+      }
+    ]
+  },
+
+  [PurchaseOrderStatus.RECEIVED]: {
+    label: 'Fully Received',
+    color: 'text-green-700',
+    bgColor: 'bg-green-100',
+    description: 'All items have been received via GRN',
+    canEdit: false,
+    canDelete: false,
+    actions: [
+      {
+        id: 'view_grns',
+        label: 'View GRNs',
+        icon: 'Eye',
+        variant: 'outline',
+        description: 'View all GRNs for this PO'
       }
     ]
   }

@@ -69,7 +69,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 // Backend API Integration
-import { PurchaseExpenseApiService } from '@/lib/purchaseExpenseApi';
+import { PurchaseBillApiService, PurchaseBillCreateRequest, PurchaseBill as ApiPurchaseBill } from '@/lib/purchaseBill.api';
+import PurchaseBillForm from '@/components/PurchaseBillForm';
 
 interface BillItem {
   id: string;
@@ -224,19 +225,21 @@ interface BillStats {
   monthlyTrend: number;
 }
 
-interface BillFormData {
+// Use the API types directly
+interface PurchaseBill {
+  id: string;
   billNumber: string;
+  vendorName: string;
   billDate: string;
-  vendorId: string;
-  poId: string;
-  grnId: string;
-  billType: 'goods' | 'services' | 'expense' | 'advance' | 'debit_note' | 'credit_note';
-  category: string;
-  subcategory: string;
-  paymentTerms: string;
   dueDate: string;
-  notes: string;
-  items: BillItem[];
+  finalAmount: number;
+  totalTax: number;
+  balanceAmount: number;
+  totalTds: number;
+  status: string;
+  approvalStatus: string;
+  discrepancies: Discrepancy[];
+  tdsEntries: TDSEntry[];
 }
 
 const PurchaseBills = () => {
@@ -321,289 +324,130 @@ const PurchaseBills = () => {
   const loadBills = useCallback(async () => {
     setLoading(true);
     try {
-      // Mock bills data
-      const mockBills: PurchaseBill[] = [
-        {
-          id: '1',
-          billNumber: 'INV-2024-001',
-          billDate: '2024-03-01',
-          vendorId: '1',
-          vendorName: 'ABC Suppliers Pvt Ltd',
-          vendorGstin: '06ABCPD1234E1Z5',
-          vendorPan: 'ABCPD1234E',
-          poNumber: 'PO/2024/001',
-          poId: '1',
-          grnNumber: 'GRN/2024/001',
-          grnId: '1',
-          billType: 'goods',
-          category: 'Office Expenses',
-          subcategory: 'Stationery',
-          paymentTerms: '30 days',
-          dueDate: '2024-03-31',
-          status: 'approved',
-          approvalStatus: 'approved',
-          approvedBy: 'Finance Manager',
-          approvedDate: '2024-03-02',
-          items: [
-            {
-              id: '1',
-              poItemId: '1',
-              grnItemId: '1',
-              itemDescription: 'Office Stationery Bundle',
-              hsnCode: '4817',
-              quantity: 9,
-              unit: 'Set',
-              rate: 500,
-              discountPercent: 10,
-              discountAmount: 450,
-              taxableAmount: 4050,
-              cgstRate: 9,
-              sgstRate: 9,
-              igstRate: 0,
-              cgstAmount: 364.5,
-              sgstAmount: 364.5,
-              igstAmount: 0,
-              totalTaxAmount: 729,
-              totalAmount: 4779,
-              tdsApplicable: false,
-              tdsSection: '',
-              tdsRate: 0,
-              tdsAmount: 0
-            }
-          ],
-          subtotal: 4500,
-          totalDiscount: 450,
-          totalCgst: 364.5,
-          totalSgst: 364.5,
-          totalIgst: 0,
-          totalCess: 0,
-          totalTax: 729,
-          totalTds: 0,
-          billAmount: 4779,
-          roundingAdjustment: -4,
-          finalAmount: 4775,
-          paidAmount: 4775,
-          balanceAmount: 0,
-          paymentMethod: 'Bank Transfer',
-          paymentReference: 'TXN123456789',
-          paymentDate: '2024-03-15',
-          bankAccount: 'SBI-001',
-          utrNumber: 'UTR123456789',
-          notes: 'Payment completed on time',
-          attachments: ['/bills/inv-2024-001.pdf'],
-          ocrProcessed: true,
-          ocrConfidence: 94.5,
-          isMatched: true,
-          matchingScore: 98.2,
-          discrepancies: [],
-          workflowSteps: [
-            {
-              id: '1',
-              stepName: 'Department Approval',
-              assignedTo: 'Department Head',
-              status: 'approved',
-              processedDate: '2024-03-01',
-              processedBy: 'Dept Head',
-              order: 1,
-              isRequired: true
-            },
-            {
-              id: '2',
-              stepName: 'Finance Approval',
-              assignedTo: 'Finance Manager',
-              status: 'approved',
-              processedDate: '2024-03-02',
-              processedBy: 'Finance Manager',
-              order: 2,
-              isRequired: true
-            }
-          ],
-          createdBy: 'Accounts Team',
-          createdDate: '2024-03-01',
-          lastModified: '2024-03-15',
-          modifiedBy: 'Accounts Team',
-          accountingEntries: [
-            {
-              id: '1',
-              account: 'Office Expenses',
-              debitAmount: 4775,
-              creditAmount: 0,
-              description: 'Office stationery purchase'
-            },
-            {
-              id: '2',
-              account: 'Accounts Payable',
-              debitAmount: 0,
-              creditAmount: 4775,
-              description: 'Vendor payment liability'
-            }
-          ],
-          tdsEntries: [],
-          complianceChecks: [
-            {
-              id: '1',
-              checkType: 'GST Validation',
-              status: 'passed',
-              message: 'GSTIN verified successfully',
-              checkDate: '2024-03-01'
-            },
-            {
-              id: '2',
-              checkType: 'PAN Validation',
-              status: 'passed',
-              message: 'PAN verified successfully',
-              checkDate: '2024-03-01'
-            }
-          ]
-        },
-        {
-          id: '2',
-          billNumber: 'SRV-2024-001',
-          billDate: '2024-03-05',
-          vendorId: '2',
-          vendorName: 'Tech Consultancy Services',
-          vendorGstin: '29TECHQ9876G1H9',
-          vendorPan: 'TECHQ9876G',
-          billType: 'services',
-          category: 'Professional Services',
-          subcategory: 'IT Consultancy',
-          paymentTerms: '15 days',
-          dueDate: '2024-03-20',
-          status: 'pending_approval',
-          approvalStatus: 'pending',
-          items: [
-            {
-              id: '1',
-              itemDescription: 'Software Development Services',
-              hsnCode: '998314',
-              quantity: 1,
-              unit: 'Month',
-              rate: 50000,
-              discountPercent: 0,
-              discountAmount: 0,
-              taxableAmount: 50000,
-              cgstRate: 9,
-              sgstRate: 9,
-              igstRate: 0,
-              cgstAmount: 4500,
-              sgstAmount: 4500,
-              igstAmount: 0,
-              totalTaxAmount: 9000,
-              totalAmount: 59000,
-              tdsApplicable: true,
-              tdsSection: '194J',
-              tdsRate: 10,
-              tdsAmount: 5000
-            }
-          ],
-          subtotal: 50000,
-          totalDiscount: 0,
-          totalCgst: 4500,
-          totalSgst: 4500,
-          totalIgst: 0,
-          totalCess: 0,
-          totalTax: 9000,
-          totalTds: 5000,
-          billAmount: 59000,
-          roundingAdjustment: 0,
-          finalAmount: 54000,
-          paidAmount: 0,
-          balanceAmount: 54000,
-          notes: 'Monthly consultancy charges',
-          attachments: ['/bills/srv-2024-001.pdf'],
-          ocrProcessed: true,
-          ocrConfidence: 91.2,
-          isMatched: false,
-          matchingScore: 0,
-          discrepancies: [
-            {
-              id: '1',
-              type: 'amount',
-              field: 'rate',
-              expectedValue: '45000',
-              actualValue: '50000',
-              severity: 'medium',
-              status: 'open',
-              comments: 'Rate higher than agreed'
-            }
-          ],
-          workflowSteps: [
-            {
-              id: '1',
-              stepName: 'Technical Review',
-              assignedTo: 'CTO',
-              status: 'pending',
-              order: 1,
-              isRequired: true
-            },
-            {
-              id: '2',
-              stepName: 'Finance Approval',
-              assignedTo: 'Finance Manager',
-              status: 'pending',
-              order: 2,
-              isRequired: true
-            }
-          ],
-          createdBy: 'Accounts Team',
-          createdDate: '2024-03-05',
-          lastModified: '2024-03-05',
-          modifiedBy: 'Accounts Team',
-          accountingEntries: [],
-          tdsEntries: [
-            {
-              id: '1',
-              section: '194J',
-              rate: 10,
-              taxableAmount: 50000,
-              tdsAmount: 5000,
-              panAvailable: true,
-              certificateGenerated: false
-            }
-          ],
-          complianceChecks: [
-            {
-              id: '1',
-              checkType: 'TDS Calculation',
-              status: 'passed',
-              message: 'TDS calculated correctly',
-              checkDate: '2024-03-05'
-            }
-          ]
-        }
-      ];
+      console.log('🔍 Loading purchase bills from API...');
+      const billsFromApi = await PurchaseBillApiService.getPurchaseBills();
+      console.log('📦 Raw API bills:', billsFromApi);
+      
+      const mappedBills: PurchaseBill[] = billsFromApi.map((bill: any) => ({
+        id: bill.id || '',
+        billNumber: bill.bill_number || `BILL-${Date.now()}`,
+        billDate: bill.bill_date || new Date().toISOString().split('T')[0],
+        vendorId: bill.vendor_id || '',
+        vendorName: bill.vendor_name || bill.vendor?.business_name || `Unknown Vendor`,
+        vendorGstin: bill.vendor_gstin || bill.vendor?.gstin || '',
+        vendorPan: bill.vendor_pan || bill.vendor?.pan || '',
+        poNumber: bill.po_number || bill.purchase_order?.po_number || '',
+        poId: bill.po_id || '',
+        grnNumber: bill.grn_number || '',
+        grnId: bill.grn_id || '',
+        billType: bill.bill_type || 'goods',
+        category: bill.category || 'Uncategorized',
+        subcategory: bill.subcategory || '',
+        paymentTerms: bill.payment_terms || 'Net 30',
+        dueDate: bill.due_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: bill.status || 'draft',
+        approvalStatus: bill.approval_status || 'pending',
+        approvedBy: bill.approved_by || '',
+        approvedDate: bill.approved_date || '',
+        rejectionReason: bill.rejection_reason || '',
+        items: Array.isArray(bill.items) ? bill.items.map((item: any) => ({
+          id: item.id || `item-${Date.now()}-${Math.random()}`,
+          poItemId: item.po_item_id || '',
+          grnItemId: item.grn_item_id || '',
+          itemDescription: item.item_description || 'Unknown Item',
+          hsnCode: item.hsn_code || '00000000',
+          quantity: Number(item.quantity) || 0,
+          unit: item.unit || 'PCS',
+          rate: Number(item.unit_price || item.rate) || 0,
+          discountPercent: Number(item.discount_percentage) || 0,
+          discountAmount: Number(item.discount_amount) || 0,
+          taxableAmount: Number(item.taxable_amount) || 0,
+          cgstRate: Number(item.cgst_rate) || 0,
+          sgstRate: Number(item.sgst_rate) || 0,
+          igstRate: Number(item.igst_rate) || 0,
+          cessRate: Number(item.cess_rate) || 0,
+          cgstAmount: Number(item.cgst_amount) || 0,
+          sgstAmount: Number(item.sgst_amount) || 0,
+          igstAmount: Number(item.igst_amount) || 0,
+          cessAmount: Number(item.cess_amount) || 0,
+          totalTaxAmount: Number(item.cgst_amount || 0) + Number(item.sgst_amount || 0) + Number(item.igst_amount || 0) + Number(item.cess_amount || 0),
+          totalAmount: Number(item.total_price || item.total_amount) || 0,
+          tdsApplicable: Boolean(item.tds_applicable) || false,
+          tdsSection: item.tds_section || '',
+          tdsRate: Number(item.tds_rate) || 0,
+          tdsAmount: Number(item.tds_amount) || 0
+        })) : [],
+        subtotal: Number(bill.subtotal || bill.taxable_amount) || 0,
+        totalDiscount: Number(bill.discount_amount) || 0,
+        totalCgst: Number(bill.total_cgst || bill.cgst_amount) || 0,
+        totalSgst: Number(bill.total_sgst || bill.sgst_amount) || 0,
+        totalIgst: Number(bill.total_igst || bill.igst_amount) || 0,
+        totalCess: Number(bill.cess_amount) || 0,
+        totalTax: Number(bill.total_cgst || bill.cgst_amount || 0) + Number(bill.total_sgst || bill.sgst_amount || 0) + Number(bill.total_igst || bill.igst_amount || 0),
+        totalTds: Number(bill.tds_amount) || 0,
+        billAmount: Number(bill.total_amount) || 0,
+        roundingAdjustment: Number(bill.rounding_adjustment) || 0,
+        finalAmount: Number(bill.grand_total || bill.total_amount) || 0,
+        paidAmount: Number(bill.paid_amount) || 0,
+        balanceAmount: Number(bill.grand_total || bill.total_amount || 0) - Number(bill.paid_amount || 0),
+        paymentMethod: bill.payment_method || '',
+        paymentReference: bill.payment_reference || '',
+        paymentDate: bill.payment_date || '',
+        bankAccount: bill.bank_account || '',
+        chequeNumber: bill.cheque_number || '',
+        utrNumber: bill.utr_number || '',
+        notes: bill.notes || '',
+        attachments: Array.isArray(bill.attachments) ? bill.attachments : (bill.attachments ? bill.attachments.split(',') : []),
+        ocrProcessed: Boolean(bill.ocr_processed) || false,
+        ocrConfidence: Number(bill.ocr_confidence) || 0,
+        ocrData: bill.ocr_data || {},
+        isMatched: Boolean(bill.is_matched) || false,
+        matchingScore: Number(bill.matching_score) || 0,
+        discrepancies: Array.isArray(bill.discrepancies) ? bill.discrepancies : [],
+        workflowSteps: Array.isArray(bill.workflow_steps) ? bill.workflow_steps : [],
+        createdBy: bill.created_by || '',
+        createdDate: bill.created_at || new Date().toISOString(),
+        lastModified: bill.updated_at || new Date().toISOString(),
+        modifiedBy: bill.updated_by || '',
+        accountingEntries: Array.isArray(bill.accounting_entries) ? bill.accounting_entries : [],
+        tdsEntries: Array.isArray(bill.tds_entries) ? bill.tds_entries : [],
+        complianceChecks: Array.isArray(bill.compliance_checks) ? bill.compliance_checks : [],
+      }));
 
-      setBills(mockBills);
-      setFilteredBills(mockBills);
+      console.log('🔄 Mapped bills:', mappedBills);
+      setBills(mappedBills);
+      setFilteredBills(mappedBills);
 
-      // Calculate stats
-      const totalValue = mockBills.reduce((sum, bill) => sum + bill.finalAmount, 0);
-      const pendingApproval = mockBills.filter(bill => bill.approvalStatus === 'pending').length;
-      const approved = mockBills.filter(bill => bill.approvalStatus === 'approved').length;
-      const paid = mockBills.filter(bill => bill.status === 'paid').length;
-      const totalTds = mockBills.reduce((sum, bill) => sum + bill.totalTds, 0);
-      const avgOcrAccuracy = mockBills.reduce((sum, bill) => sum + (bill.ocrConfidence || 0), 0) / mockBills.length;
+      // Calculate stats from the mapped data
+      const totalValue = mappedBills.reduce((sum, bill) => sum + bill.finalAmount, 0);
+      const pendingApproval = mappedBills.filter(bill => bill.approvalStatus === 'pending').length;
+      const approved = mappedBills.filter(bill => bill.approvalStatus === 'approved').length;
+      const paid = mappedBills.filter(bill => bill.status === 'paid').length;
+      const totalTds = mappedBills.reduce((sum, bill) => sum + bill.totalTds, 0);
+      const avgOcrAccuracy = mappedBills.length > 0 ? mappedBills.reduce((sum, bill) => sum + (bill.ocrConfidence || 0), 0) / mappedBills.length : 0;
 
       setStats({
-        total: mockBills.length,
+        total: mappedBills.length,
         pendingApproval,
         approved,
         paid,
         totalValue,
-        averageValue: totalValue / mockBills.length,
+        averageValue: mappedBills.length > 0 ? totalValue / mappedBills.length : 0,
         totalTds,
         ocrAccuracy: avgOcrAccuracy,
-        monthlyTrend: 18.5
+        monthlyTrend: 18.5 // This could be calculated from historical data
       });
 
+      console.log('✅ Bills loaded successfully, count:', mappedBills.length);
       toast({
         title: 'Success',
-        description: 'Purchase bills loaded successfully',
+        description: `Loaded ${mappedBills.length} purchase bills successfully`,
       });
     } catch (error) {
+      console.error('❌ Error loading purchase bills:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load purchase bills',
+        description: `Failed to load purchase bills: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive',
       });
     } finally {
@@ -791,21 +635,21 @@ const PurchaseBills = () => {
         tds_amount: formData.items.reduce((sum, item) => sum + (item.tdsAmount || 0), 0),
         total_amount: formData.items.reduce((sum, item) => sum + item.totalAmount, 0),
         payment_status: 'pending',
-        approval_status: 'pending'
+        approval_status: 'pending',
+        notes: formData.notes || undefined
       };
 
       let savedBill;
       if (editingBill) {
-        // Note: Update Bill API method might need to be added to backend
+        // Update existing bill via backend API
+        savedBill = await PurchaseBillApiService.updatePurchaseBill(editingBill.id, billApiData);
         toast({
-          title: 'Info',
-          description: 'Bill editing via API not yet implemented in backend',
-          variant: 'default',
+          title: 'Success',
+          description: 'Purchase bill updated successfully',
         });
-        return;
       } else {
         // Create new bill via backend API
-        savedBill = await PurchaseExpenseApiService.createPurchaseBill(billApiData);
+        savedBill = await PurchaseBillApiService.createPurchaseBill(billApiData);
         toast({
           title: 'Success',
           description: 'Purchase bill created successfully',
@@ -817,6 +661,7 @@ const PurchaseBills = () => {
 
       setShowBillForm(false);
       resetForm();
+      setEditingBill(null);
     } catch (error) {
       console.error('Error saving bill:', error);
       toast({
@@ -844,13 +689,17 @@ const PurchaseBills = () => {
 
   const handleApproveBill = async (billId: string) => {
     try {
+      // Call backend API to approve the bill
+      const approvedBill = await PurchaseBillApiService.approvePurchaseBill(billId);
+      
+      // Update local state with the approved bill data
       setBills(prev => prev.map(bill => 
         bill.id === billId 
           ? { 
               ...bill, 
               approvalStatus: 'approved',
               status: 'approved',
-              approvedBy: 'current_user',
+              approvedBy: 'current_user', // This should come from the API response
               approvedDate: new Date().toISOString().split('T')[0]
             } 
           : bill
@@ -861,34 +710,44 @@ const PurchaseBills = () => {
         description: 'Bill approved successfully',
       });
     } catch (error) {
+      console.error('Error approving bill:', error);
       toast({
         title: 'Error',
-        description: 'Failed to approve bill',
+        description: `Failed to approve bill: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive',
       });
     }
   };
 
-  const handleRejectBill = async (billId: string) => {
+  const handleRejectBill = async (billId: string, rejectionReason?: string) => {
     try {
+      // Use default rejection reason if none provided
+      const reason = rejectionReason || 'Rejected by approver';
+      
+      // Call backend API to reject the bill
+      const rejectedBill = await PurchaseBillApiService.rejectPurchaseBill(billId, reason);
+      
+      // Update local state with the rejected bill data
       setBills(prev => prev.map(bill => 
         bill.id === billId 
           ? { 
               ...bill, 
               approvalStatus: 'rejected',
-              status: 'rejected'
+              status: 'rejected',
+              rejectionReason: reason
             } 
           : bill
       ));
       
       toast({
         title: 'Success',
-        description: 'Bill rejected',
+        description: 'Bill rejected successfully',
       });
     } catch (error) {
+      console.error('Error rejecting bill:', error);
       toast({
         title: 'Error',
-        description: 'Failed to reject bill',
+        description: `Failed to reject bill: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive',
       });
     }
@@ -923,6 +782,10 @@ const PurchaseBills = () => {
 
   const handleDeleteBill = async (billId: string) => {
     try {
+      // Call backend API to delete the bill
+      await PurchaseBillApiService.deletePurchaseBill(billId);
+      
+      // Update local state to remove the bill
       setBills(prev => prev.filter(bill => bill.id !== billId));
       setSelectedBills(prev => prev.filter(id => id !== billId));
       
@@ -931,9 +794,10 @@ const PurchaseBills = () => {
         description: 'Bill deleted successfully',
       });
     } catch (error) {
+      console.error('Error deleting bill:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete bill',
+        description: `Failed to delete bill: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive',
       });
     }
@@ -1878,178 +1742,16 @@ const PurchaseBills = () => {
 
         {/* Bill Form Dialog */}
         <Dialog open={showBillForm} onOpenChange={setShowBillForm}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingBill ? 'Edit Purchase Bill' : 'Create New Bill'}
-              </DialogTitle>
-              <DialogDescription>
-                {editingBill 
-                  ? 'Update bill information and line items' 
-                  : 'Create a new purchase bill with vendor and item details'
-                }
-              </DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmitBill} className="space-y-6">
-              {/* Basic Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">Bill Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="billNumber">Bill Number *</Label>
-                    <Input
-                      id="billNumber"
-                      value={formData.billNumber}
-                      onChange={(e) => setFormData({...formData, billNumber: e.target.value})}
-                      placeholder="INV-2024-001"
-                      required
-                    />
-                    {formErrors.billNumber && (
-                      <p className="text-sm text-red-600">{formErrors.billNumber}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="billDate">Bill Date *</Label>
-                    <Input
-                      id="billDate"
-                      type="date"
-                      value={formData.billDate}
-                      onChange={(e) => setFormData({...formData, billDate: e.target.value})}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="vendorId">Vendor *</Label>
-                    <Select value={formData.vendorId} onValueChange={(value) => setFormData({...formData, vendorId: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Vendor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">ABC Suppliers Pvt Ltd</SelectItem>
-                        <SelectItem value="2">Tech Consultancy Services</SelectItem>
-                        <SelectItem value="3">XYZ Corp</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {formErrors.vendorId && (
-                      <p className="text-sm text-red-600">{formErrors.vendorId}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="billType">Bill Type</Label>
-                    <Select value={formData.billType} onValueChange={(value: 'goods' | 'services' | 'expense' | 'advance' | 'debit_note' | 'credit_note') => setFormData({...formData, billType: value})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {billTypes.map(type => (
-                          <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category *</Label>
-                    <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {billCategories.map(category => (
-                          <SelectItem key={category} value={category}>{category}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {formErrors.category && (
-                      <p className="text-sm text-red-600">{formErrors.category}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="dueDate">Due Date *</Label>
-                    <Input
-                      id="dueDate"
-                      type="date"
-                      value={formData.dueDate}
-                      onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
-                      required
-                    />
-                    {formErrors.dueDate && (
-                      <p className="text-sm text-red-600">{formErrors.dueDate}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="paymentTerms">Payment Terms</Label>
-                    <Input
-                      id="paymentTerms"
-                      value={formData.paymentTerms}
-                      onChange={(e) => setFormData({...formData, paymentTerms: e.target.value})}
-                      placeholder="30 days"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="subcategory">Subcategory</Label>
-                    <Input
-                      id="subcategory"
-                      value={formData.subcategory}
-                      onChange={(e) => setFormData({...formData, subcategory: e.target.value})}
-                      placeholder="Specific subcategory"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Notes */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">Additional Information</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                    placeholder="Additional notes about the bill..."
-                    rows={3}
-                  />
-                </div>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setShowBillForm(false)}
-                  disabled={submitting}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  className="bg-blue-600 hover:bg-blue-700"
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      {editingBill ? 'Updating...' : 'Creating...'}
-                    </>
-                  ) : (
-                    editingBill ? 'Update Bill' : 'Create Bill'
-                  )}
-                </Button>
-              </div>
-            </form>
+          <DialogContent className="max-w-[95vw] w-full max-h-[90vh] overflow-y-auto">
+            <PurchaseBillForm
+              editingBill={editingBill}
+              onSubmit={handleSubmitBill}
+              onCancel={() => setShowBillForm(false)}
+            />
           </DialogContent>
         </Dialog>
+
+
 
         {/* Bill Details Sheet */}
         <Sheet open={showBillDetails} onOpenChange={setShowBillDetails}>

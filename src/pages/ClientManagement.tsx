@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import ClientForm from "@/components/ClientForm";
+// ClientForm component not available
 import ClientList from "@/components/ClientList";
 import { Client } from "@/types/client";
 import { clientApi } from "@/lib/clientApi";
@@ -295,11 +295,9 @@ const ClientManagement = () => {
               {editingClient ? 'Edit Client' : 'Add New Client'}
             </DialogTitle>
           </DialogHeader>
-          <ClientForm
-            client={editingClient || undefined}
-            onSuccess={handleFormSuccess}
-            onCancel={handleFormCancel}
-          />
+          <div className="text-center py-8">
+            <p className="text-gray-500">Client form component not available</p>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

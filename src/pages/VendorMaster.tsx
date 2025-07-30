@@ -48,7 +48,7 @@ import {
   Eye
 } from 'lucide-react';
 // Backend API Integration
-import { PurchaseExpenseApiService, type Vendor as ApiVendor, type VendorCreateRequest } from '@/lib/purchaseExpenseApi';
+import { VendorApiService, type Vendor as ApiVendor, type VendorCreateRequest } from '@/lib/vendor.api';
 
 // Updated interfaces to match the new 37-column backend schema
 interface Vendor {
@@ -349,7 +349,7 @@ const VendorMaster = () => {
   const loadVendors = useCallback(async () => {
     setLoading(true);
     try {
-      const vendorData = await PurchaseExpenseApiService.getVendors();
+      const vendorData = await VendorApiService.getVendors();
       setVendors(vendorData);
       
       // Calculate stats
@@ -565,14 +565,14 @@ const VendorMaster = () => {
       let savedVendor;
       if (editingVendor) {
         // Update existing vendor via backend API
-        savedVendor = await PurchaseExpenseApiService.updateVendor(editingVendor.id, vendorApiData);
+        savedVendor = await VendorApiService.updateVendor(editingVendor.id, vendorApiData);
         toast({
           title: "Success",
           description: "Vendor updated successfully",
         });
       } else {
         // Create new vendor via backend API
-        savedVendor = await PurchaseExpenseApiService.createVendor(vendorApiData);
+        savedVendor = await VendorApiService.createVendor(vendorApiData);
         toast({
           title: "Success",
           description: "Vendor created successfully",
@@ -626,7 +626,7 @@ const VendorMaster = () => {
 
   const handleDeleteVendor = async (vendorId: string) => {
     try {
-      await PurchaseExpenseApiService.deleteVendor(vendorId);
+      await VendorApiService.deleteVendor(vendorId);
       await loadVendors();
       toast({
         title: "Success",

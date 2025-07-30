@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { PurchaseExpenseApiService } from '@/lib/purchaseExpenseApi';
+import { PurchaseOrderApiService } from '@/lib/purchaseOrder.api';
 
 const TestApprovalWorkflow = () => {
   const { toast } = useToast();
@@ -28,7 +28,7 @@ const TestApprovalWorkflow = () => {
 
     try {
       setLoading(true);
-      const response = await PurchaseExpenseApiService.submitPurchaseOrderForApproval(testPoId);
+      const response = await PurchaseOrderApiService.submitPurchaseOrderForApproval(testPoId);
       
       addTestResult({
         action: 'Submit for Approval',
@@ -71,7 +71,7 @@ const TestApprovalWorkflow = () => {
 
     try {
       setLoading(true);
-      const response = await PurchaseExpenseApiService.processPurchaseOrderApproval(
+      const response = await PurchaseOrderApiService.processPurchaseOrderApproval(
         testPoId, 
         action, 
         `Test ${action} action`
@@ -118,7 +118,7 @@ const TestApprovalWorkflow = () => {
 
     try {
       setLoading(true);
-      const response = await PurchaseExpenseApiService.updatePurchaseOrderOperationalStatus(
+      const response = await PurchaseOrderApiService.updatePurchaseOrderOperationalStatus(
         testPoId, 
         status
       );
